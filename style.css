@@ -1,0 +1,420 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --widm-green: #2D5016;
+    --widm-dark-green: #1a3009;
+    --widm-light-green: #4a7c2c;
+    --widm-accent: #8bc34a;
+    --dark: #0a0a0a;
+    --grey: #2a2a2a;
+    --light-grey: #3a3a3a;
+    --text-light: #e0e0e0;
+    --danger: #c62828;
+    --success: #388e3c;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #000000;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(45, 80, 22, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(45, 80, 22, 0.2) 0%, transparent 50%);
+    z-index: 0;
+}
+
+.container {
+    background: linear-gradient(135deg, var(--grey) 0%, var(--dark) 100%);
+    border-radius: 24px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.8),
+        0 0 0 2px var(--widm-green);
+    max-width: 500px;
+    width: 100%;
+    padding: 40px;
+    animation: slideIn 0.5s ease;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 80px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%232D5016"/><path d="M30,50 Q50,30 70,50 Q50,70 30,50" fill="%238bc34a" opacity="0.3"/></svg>');
+    background-size: contain;
+    opacity: 0.3;
+}
+
+h1 {
+    font-size: 2.5em;
+    color: var(--widm-accent);
+    margin-bottom: 5px;
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(139, 195, 74, 0.3);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.subtitle {
+    color: var(--text-light);
+    font-size: 1.1em;
+    font-weight: 300;
+    opacity: 0.8;
+}
+
+h2 {
+    color: var(--widm-accent);
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    font-weight: 700;
+}
+
+h3 {
+    color: var(--text-light);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.scherm {
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.hidden {
+    display: none !important;
+}
+
+.instructie {
+    color: var(--text-light);
+    margin-bottom: 25px;
+    line-height: 1.6;
+    opacity: 0.8;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid var(--light-grey);
+    border-radius: 12px;
+    font-size: 16px;
+    margin-bottom: 15px;
+    transition: all 0.3s;
+    background: var(--dark);
+    color: var(--text-light);
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: var(--widm-green);
+    box-shadow: 0 0 0 3px rgba(45, 80, 22, 0.2);
+}
+
+input[type="text"]::placeholder {
+    color: #666;
+}
+
+button {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--widm-green) 0%, var(--widm-dark-green) 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+button:hover {
+    background: linear-gradient(135deg, var(--widm-light-green) 0%, var(--widm-green) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(45, 80, 22, 0.4);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button.member-btn {
+    background: var(--light-grey);
+    color: var(--text-light);
+    margin-bottom: 10px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+button.member-btn:hover {
+    background: var(--grey);
+    box-shadow: 0 5px 20px rgba(255, 255, 255, 0.1);
+}
+
+#countdown {
+    font-size: 120px;
+    font-weight: 900;
+    color: var(--widm-accent);
+    text-align: center;
+    margin: 40px 0;
+    animation: pulse 1s infinite;
+    text-shadow: 0 0 30px rgba(139, 195, 74, 0.5);
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+#rol-content {
+    text-align: center;
+    padding: 30px;
+}
+
+.rol-mol {
+    background: linear-gradient(135deg, var(--danger) 0%, #8b0000 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 16px;
+    margin: 20px 0;
+    font-size: 2.5em;
+    font-weight: 900;
+    text-transform: uppercase;
+    animation: shake 0.5s;
+    box-shadow: 
+        0 10px 30px rgba(198, 40, 40, 0.5),
+        inset 0 0 50px rgba(0, 0, 0, 0.3);
+    letter-spacing: 3px;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(-10px) rotate(-2deg); }
+    75% { transform: translateX(10px) rotate(2deg); }
+}
+
+.rol-kandidaat {
+    background: linear-gradient(135deg, var(--widm-green) 0%, var(--widm-dark-green) 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 16px;
+    margin: 20px 0;
+    font-size: 2.5em;
+    font-weight: 900;
+    text-transform: uppercase;
+    box-shadow: 
+        0 10px 30px rgba(45, 80, 22, 0.5),
+        inset 0 0 50px rgba(0, 0, 0, 0.3);
+    letter-spacing: 3px;
+}
+
+.status-badge {
+    display: inline-block;
+    background: var(--widm-green);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 4px 10px rgba(45, 80, 22, 0.3);
+}
+
+#locatie-naam {
+    color: var(--widm-accent);
+    margin-bottom: 25px;
+    text-shadow: 0 2px 10px rgba(139, 195, 74, 0.3);
+}
+
+.opdracht-box {
+    background: linear-gradient(135deg, var(--light-grey) 0%, var(--grey) 100%);
+    padding: 25px;
+    border-radius: 16px;
+    margin: 25px 0;
+    border-left: 5px solid var(--widm-green);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.opdracht-box h3 {
+    color: var(--widm-accent);
+    margin-bottom: 15px;
+}
+
+.opdracht-box p {
+    color: var(--text-light);
+    line-height: 1.6;
+    margin-top: 10px;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.file-label {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: var(--light-grey);
+    color: var(--text-light);
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    margin-bottom: 10px;
+    border: 2px solid var(--grey);
+}
+
+.file-label:hover {
+    background: var(--grey);
+    border-color: var(--widm-green);
+    transform: translateY(-2px);
+}
+
+#bestandsnaam {
+    color: var(--widm-accent);
+    font-size: 0.9em;
+    margin: 10px 0;
+    text-align: center;
+}
+
+#upload-btn {
+    background: linear-gradient(135deg, var(--widm-light-green) 0%, var(--widm-green) 100%);
+    margin-top: 20px;
+}
+
+#upload-btn:hover {
+    background: linear-gradient(135deg, var(--widm-accent) 0%, var(--widm-light-green) 100%);
+}
+
+#upload-btn:disabled {
+    background: var(--light-grey);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.wacht-box {
+    background: linear-gradient(135deg, #3a2f0b 0%, #2a2008 100%);
+    border: 2px solid #8b7329;
+    padding: 30px;
+    border-radius: 16px;
+    text-align: center;
+    margin: 25px 0;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.wacht-box p {
+    color: #f0e68c;
+    font-size: 1.1em;
+}
+
+.success-box {
+    background: linear-gradient(135deg, var(--widm-dark-green) 0%, #0d2604 100%);
+    border: 2px solid var(--widm-accent);
+    padding: 30px;
+    border-radius: 16px;
+    margin: 25px 0;
+    box-shadow: 
+        0 10px 30px rgba(139, 195, 74, 0.2),
+        inset 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.success-box h3 {
+    color: var(--widm-accent);
+    font-size: 1.5em;
+    margin-bottom: 20px;
+}
+
+.hint-label {
+    color: var(--text-light);
+    font-weight: 600;
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+
+.hint-text {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 20px;
+    border-radius: 12px;
+    font-style: italic;
+    color: var(--widm-accent);
+    line-height: 1.6;
+    margin: 15px 0;
+    border-left: 4px solid var(--widm-accent);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.success-btn {
+    background: linear-gradient(135deg, var(--widm-accent) 0%, var(--widm-light-green) 100%);
+    margin-top: 20px;
+}
+
+.success-btn:hover {
+    background: linear-gradient(135deg, #a5d76a 0%, var(--widm-accent) 100%);
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 25px;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+    
+    #countdown {
+        font-size: 80px;
+    }
+    
+    .rol-mol, .rol-kandidaat {
+        font-size: 2em;
+        padding: 30px 20px;
+    }
+}
