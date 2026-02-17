@@ -53,13 +53,13 @@
         <div id="captain-onthulling-scherm" class="scherm hidden">
             <div id="captain-naam-onthulling"></div>
             <div id="captain-keuze-sectie">
-                <div class="instructie-box">
-                    <p>Als captain vorm jij de schakel tussen de telefoon met aanwijzingen en opdrachten en jouw team. Je speelt het spel op jouw eigen telefoon.</p>
+                <div style="background: #3a3a3a; padding: 20px; border-radius: 16px; margin: 20px 0; border-left: 5px solid #8bc34a;">
+                    <p style="color: #e0e0e0; line-height: 1.7;">Als captain vorm jij de schakel tussen de telefoon met aanwijzingen en opdrachten en jouw team. Je speelt het spel op jouw eigen telefoon.</p>
                     <br>
-                    <p><strong>Lees jij dit op jouw eigen telefoon?</strong></p>
+                    <p style="color: #8bc34a; font-weight: bold;">Lees jij dit op jouw eigen telefoon?</p>
                 </div>
                 <button id="ja-btn" onclick="captainOpZelfdeTelefoon()">✅ Ja, start het spel!</button>
-                <button id="nee-btn" onclick="toonQRCode()">📱 Nee, toon QR-code</button>
+                <button id="nee-btn" onclick="toonQRCode()" style="background: #3a3a3a; margin-top: 10px;">📱 Nee, toon QR-code</button>
             </div>
             <div id="qr-sectie" class="hidden">
                 <p class="instructie">Laat de captain deze QR-code scannen op zijn of haar telefoon:</p>
@@ -116,11 +116,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Audio voor piepje -->
-    <audio id="piep-geluid" preload="auto">
-        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhS0phmML/3bpySD1AV4O+8OLIoHFRPT5decL/8NWrfFM7Nzxnm8n/+trDnXRXPzdAbtH/+NKzjW5WNDZD" type="audio/wav">
-    </audio>
 
     <script>
         // ===== CONFIGURATIE =====
@@ -254,10 +249,9 @@
             const timer = setInterval(() => {
                 count--;
                 document.getElementById('countdown').textContent = count;
-                if (count > 0) speelPiep();
+                speelPiep();
                 
                 if (count === 0) {
-                    speelPiep();
                     clearInterval(timer);
                     toonRol();
                 }
@@ -312,26 +306,21 @@
 
         async function startCaptainOnthulling(naam) {
             huidigeCaptain = naam;
-
-            // Genereer captain code meteen
             huidigeCaptainCode = huidigTeamcode + '-' + genereerCode(6);
             
-            // Sla op in backend
             await apiCall('setCaptainCode', {
                 teamcode: huidigTeamcode,
                 captaincode: huidigeCaptainCode,
                 captainnaam: huidigeCaptain
             }, 'POST');
 
-            // Toon onthulling meteen
             document.getElementById('captain-naam-onthulling').innerHTML = `
                 <div class="captain-reveal">
                     🎖️ ${huidigeCaptain}
                 </div>
-                <p class="instructie" style="text-align:center; margin-bottom: 20px;">is de captain!</p>
+                <p style="color: #e0e0e0; text-align: center; margin-bottom: 20px;">is de captain!</p>
             `;
 
-            // Reset QR sectie
             document.getElementById('qr-sectie').classList.add('hidden');
             document.getElementById('captain-keuze-sectie').classList.remove('hidden');
             document.getElementById('qr-code').innerHTML = '';
@@ -341,7 +330,6 @@
 
         function captainOpZelfdeTelefoon() {
             localStorage.setItem('widm_teamcode', huidigTeamcode);
-            huidigTeamcode = huidigTeamcode;
             startSpel();
         }
 
@@ -382,7 +370,7 @@
             }
 
             if (result.error === 'verlopen') {
-                alert('❌ Deze code is verlopen! De spelleider moet een nieuwe code genereren.');
+                alert('❌ Deze code is verlopen!');
                 return;
             }
 
