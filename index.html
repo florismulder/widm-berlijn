@@ -8,6 +8,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+
+    <!-- Eigen Popup -->
+    <div id="popup-overlay" class="popup-overlay hidden">
+        <div class="popup-box">
+            <div class="popup-header">
+                <span>🕵️ Wie is de Mol? - Berlijn</span>
+            </div>
+            <div class="popup-body">
+                <p id="popup-tekst"></p>
+            </div>
+            <div class="popup-footer">
+                <button id="popup-ok-btn" onclick="sluitPopup()">OK</button>
+                <button id="popup-annuleer-btn" onclick="annuleerPopup()" class="hidden">Annuleer</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <h1>🕵️ Wie is de Mol?</h1>
@@ -64,7 +81,6 @@
             <div id="qr-sectie" class="hidden">
                 <p class="instructie">Laat de captain deze QR-code scannen op zijn of haar telefoon:</p>
                 <div id="qr-code"></div>
-                <p id="qr-waarschuwing" class="hidden waarschuwing">⚠️ Let op: deze code kan nog maar 1x gebruikt worden!</p>
                 <p id="captain-code-tekst" style="font-size: 0.85em; color: #aaa; margin-top: 10px; text-align: center;"></p>
             </div>
         </div>
@@ -73,8 +89,12 @@
         <div id="captain-login-scherm" class="scherm hidden">
             <h2>Captain login</h2>
             <p class="instructie">Welkom captain! Klik op de knop om het spel te starten.</p>
+            <div id="laad-animatie" class="hidden">
+                <div class="laad-spinner"></div>
+                <p style="color: #8bc34a; margin-top: 15px;">Even geduld...</p>
+            </div>
             <input type="text" id="captain-code-input" placeholder="Captain code" autocomplete="off" style="display:none;">
-            <button onclick="captainLogin()">🚀 Start het spel!</button>
+            <button id="captain-start-btn" onclick="captainLogin()">🚀 Start het spel!</button>
         </div>
 
         <!-- Scherm 8: Spel Scherm -->
@@ -129,6 +149,38 @@
         let huidigeCaptain = '';
         let huidigeCaptainCode = '';
         let spelInterval = null;
+        let popupCallback = null;
+
+        // ===== EIGEN POPUP =====
+        function toonPopup(tekst, metAnnuleer = false, callback = null) {
+            popupCallback = callback;
+            document.getElementById('popup-tekst').textContent = tekst;
+            
+            const annuleerBtn = document.getElementById('popup-annuleer-btn');
+            if (metAnnuleer) {
+                annuleerBtn.classList.remove('hidden');
+            } else {
+                annuleerBtn.classList.add('hidden');
+            }
+            
+            document.getElementById('popup-overlay').classList.remove('hidden');
+        }
+
+        function sluitPopup() {
+            document.getElementById('popup-overlay').classList.add('hidden');
+            if (popupCallback) {
+                popupCallback(true);
+                popupCallback = null;
+            }
+        }
+
+        function annuleerPopup() {
+            document.getElementById('popup-overlay').classList.add('hidden');
+            if (popupCallback) {
+                popupCallback(false);
+                popupCallback = null;
+            }
+        }
 
         // ===== PIEPJE =====
         function speelPiep() {
@@ -195,14 +247,14 @@
             const teamcode = document.getElementById('teamcode-input').value.trim().toUpperCase();
             
             if (!teamcode) {
-                alert('Voer een teamcode in!');
+                toonPopup('Voer een teamcode in!');
                 return;
             }
 
             const leden = await apiCall('getLeden', { teamcode });
             
             if (!leden || leden.length === 0) {
-                alert('Ongeldige teamcode! Probeer opnieuw.');
+                toonPopup('Ongeldige teamcode! Probeer opnieuw.');
                 return;
             }
             
@@ -265,7 +317,7 @@
             });
             
             if (!data || data.error) {
-                alert('Fout bij ophalen rol');
+                toonPopup('Fout bij ophalen rol. Probeer opnieuw.');
                 return;
             }
             
@@ -358,30 +410,43 @@
             const code = huidigeCaptainCode || document.getElementById('captain-code-input').value.trim().toUpperCase();
             
             if (!code) {
-                alert('Geen captain code gevonden!');
+                toonPopup('Geen captain code gevonden!');
                 return;
             }
 
+            // Laadanimatie tonen
+            document.getElementById('captain-start-btn').classList.add('hidden');
+            document.getElementById('laad-animatie').classList.remove('hidden');
+
             const result = await apiCall('checkCaptainCode', { code });
 
+            document.getElementById('laad-animatie').classList.add('hidden');
+            document.getElementById('captain-start-btn').classList.remove('hidden');
+
             if (!result) {
-                alert('Verbindingsfout. Probeer opnieuw.');
+                toonPopup('Verbindingsfout. Probeer opnieuw.');
                 return;
             }
 
             if (result.error === 'verlopen') {
-                alert('❌ Deze code is verlopen!');
+                toonPopup('❌ Deze code is verlopen! De spelleider moet een nieuwe code genereren.');
                 return;
             }
 
             if (result.error) {
-                alert('Ongeldige code! Controleer de code en probeer opnieuw.');
+                toonPopup('Ongeldige code! Controleer de code en probeer opnieuw.');
                 return;
             }
 
             if (result.warning) {
-                const doorgaan = confirm('⚠️ ' + result.message + '\n\nWil je toch doorgaan?');
-                if (!doorgaan) return;
+                toonPopup('⚠️ ' + result.message + '\n\nWil je toch doorgaan?', true, (doorgaan) => {
+                    if (doorgaan) {
+                        localStorage.setItem('widm_teamcode', result.teamcode);
+                        huidigTeamcode = result.teamcode;
+                        startSpel();
+                    }
+                });
+                return;
             }
 
             localStorage.setItem('widm_teamcode', result.teamcode);
@@ -441,7 +506,7 @@
             const input = document.getElementById('foto-input');
             
             if (!input.files || input.files.length === 0) {
-                alert('Selecteer eerst een foto of video!');
+                toonPopup('Selecteer eerst een foto of video!');
                 return;
             }
             
@@ -494,7 +559,7 @@
 
                 } else {
                     document.getElementById('voortgang-balk-container').classList.add('hidden');
-                    alert('Uploaden mislukt. Probeer opnieuw.');
+                    toonPopup('Uploaden mislukt. Probeer opnieuw.');
                     btn.disabled = false;
                     btn.textContent = 'Verstuur opdracht';
                 }
@@ -510,7 +575,7 @@
             if (result && result.success) {
                 updateSpelStatus();
             } else {
-                alert('Fout bij naar volgende locatie gaan.');
+                toonPopup('Fout bij naar volgende locatie gaan. Probeer opnieuw.');
             }
         }
 
