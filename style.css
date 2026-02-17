@@ -483,3 +483,21 @@ input[type="file"] {
     font-weight: 700;
     font-size: 0.9em;
 }
+
+/* Captain onthulling tekst fix */
+.instructie-box {
+    background: var(--light-grey);
+    padding: 20px;
+    border-radius: 16px;
+    margin: 20px 0;
+    border-left: 5px solid var(--widm-accent);
+}
+
+.instructie-box p {
+    color: var(--text-light) !important;
+    line-height: 1.7;
+}
+
+.instructie-box strong {
+    color: var(--widm-accent) !important;
+}
