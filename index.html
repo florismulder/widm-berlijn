@@ -16,7 +16,7 @@
 
         <!-- Scherm 1: Team Login -->
         <div id="login-scherm" class="scherm hidden">
-            <h2>Team Login</h2>
+            <h2>Team login</h2>
             <p class="instructie">Voer je teamcode in om te beginnen.</p>
             <input type="text" id="teamcode-input" placeholder="Voer je teamcode in" autocomplete="off">
             <button onclick="teamLogin()">Inloggen</button>
@@ -24,7 +24,7 @@
 
         <!-- Scherm 2: Rollen Verdelen -->
         <div id="rollen-scherm" class="scherm hidden">
-            <h2>Rollen Verdelen</h2>
+            <h2>Rollen verdelen</h2>
             <p class="instructie">Elk teamlid bekijkt individueel zijn of haar rol. Geef de telefoon door!</p>
             <div id="leden-lijst"></div>
         </div>
@@ -44,50 +44,46 @@
 
         <!-- Scherm 5: Captain Selectie -->
         <div id="captain-scherm" class="scherm hidden">
-            <h2>Kies een Captain</h2>
+            <h2>Kies een captain</h2>
             <p class="instructie">De captain bestuurt de app tijdens het spel. Wie wordt het?</p>
             <div id="captain-lijst"></div>
         </div>
 
-        <!-- Scherm 6: Dramatische Captain Onthulling -->
+        <!-- Scherm 6: Captain Onthulling -->
         <div id="captain-onthulling-scherm" class="scherm hidden">
-            <div id="onthulling-content">
-                <p class="instructie">De captain is...</p>
-                <div id="captain-countdown">5</div>
-            </div>
-        </div>
-
-        <!-- Scherm 7: Captain Bevestiging + QR -->
-        <div id="captain-bevestiging-scherm" class="scherm hidden">
             <div id="captain-naam-onthulling"></div>
             <div id="captain-keuze-sectie">
-                <p class="instructie">Ben jij de captain?</p>
+                <div class="instructie-box">
+                    <p>Als captain vorm jij de schakel tussen de telefoon met aanwijzingen en opdrachten en jouw team. Je speelt het spel op jouw eigen telefoon.</p>
+                    <br>
+                    <p><strong>Lees jij dit op jouw eigen telefoon?</strong></p>
+                </div>
                 <button id="ja-btn" onclick="captainOpZelfdeTelefoon()">✅ Ja, start het spel!</button>
-                <button id="nee-btn" onclick="toonQRCode()" style="background: var(--light-grey); margin-top: 10px;">📱 Nee, toon QR-code</button>
+                <button id="nee-btn" onclick="toonQRCode()">📱 Nee, toon QR-code</button>
             </div>
             <div id="qr-sectie" class="hidden">
-                <p class="instructie">Scan deze QR-code op de telefoon van de captain:</p>
+                <p class="instructie">Laat de captain deze QR-code scannen op zijn of haar telefoon:</p>
                 <div id="qr-code"></div>
                 <p id="qr-waarschuwing" class="hidden waarschuwing">⚠️ Let op: deze code kan nog maar 1x gebruikt worden!</p>
-                <p id="captain-code-tekst" style="font-size: 0.8em; color: #666; margin-top: 10px;"></p>
+                <p id="captain-code-tekst" style="font-size: 0.85em; color: #aaa; margin-top: 10px; text-align: center;"></p>
             </div>
         </div>
 
-        <!-- Scherm 8: Captain Login (via QR) -->
+        <!-- Scherm 7: Captain Login (via QR) -->
         <div id="captain-login-scherm" class="scherm hidden">
-            <h2>Captain Login</h2>
-            <p class="instructie">Voer de captain-code in:</p>
-            <input type="text" id="captain-code-input" placeholder="Captain code" autocomplete="off">
-            <button onclick="captainLogin()">Start het spel!</button>
+            <h2>Captain login</h2>
+            <p class="instructie">Welkom captain! Klik op de knop om het spel te starten.</p>
+            <input type="text" id="captain-code-input" placeholder="Captain code" autocomplete="off" style="display:none;">
+            <button onclick="captainLogin()">🚀 Start het spel!</button>
         </div>
 
-        <!-- Scherm 9: Spel Scherm -->
+        <!-- Scherm 8: Spel Scherm -->
         <div id="spel-scherm" class="scherm hidden">
-            <div class="status-badge" id="status-badge">Huidige Locatie</div>
+            <div class="status-badge" id="status-badge">Huidige locatie</div>
             <h2 id="locatie-naam"></h2>
             
             <div class="opdracht-box">
-                <h3>📋 De Opdracht</h3>
+                <h3>📋 De opdracht</h3>
                 <p id="opdracht-tekst"></p>
             </div>
 
@@ -101,7 +97,7 @@
                     <div id="voortgang-balk"></div>
                     <p id="voortgang-tekst">Uploaden...</p>
                 </div>
-                <button onclick="verstuurBewijs()" id="upload-btn">Verstuur Opdracht</button>
+                <button onclick="verstuurBewijs()" id="upload-btn">Verstuur opdracht</button>
             </div>
 
             <div id="wacht-sectie" class="hidden">
@@ -112,7 +108,7 @@
 
             <div id="hint-sectie" class="hidden">
                 <div class="success-box">
-                    <h3>✅ Opdracht Voltooid!</h3>
+                    <h3>✅ Opdracht voltooid!</h3>
                     <p class="hint-label">Hint naar de volgende locatie:</p>
                     <p id="hint-tekst" class="hint-text"></p>
                     <button onclick="naarVolgendeLocatie()" class="success-btn">We zijn er!</button>
@@ -120,6 +116,11 @@
             </div>
         </div>
     </div>
+
+    <!-- Audio voor piepje -->
+    <audio id="piep-geluid" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhS0phmML/3bpySD1AV4O+8OLIoHFRPT5decL/8NWrfFM7Nzxnm8n/+trDnXRXPzdAbtH/+NKzjW5WNDZD" type="audio/wav">
+    </audio>
 
     <script>
         // ===== CONFIGURATIE =====
@@ -134,6 +135,25 @@
         let huidigeCaptainCode = '';
         let spelInterval = null;
 
+        // ===== PIEPJE =====
+        function speelPiep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } catch(e) {
+                console.log('Audio niet beschikbaar');
+            }
+        }
+
         // ===== HELPER FUNCTIES =====
         function toonScherm(schermId) {
             document.querySelectorAll('.scherm').forEach(scherm => {
@@ -142,7 +162,7 @@
             document.getElementById(schermId).classList.remove('hidden');
         }
 
-        function genereerCode(lengte = 8) {
+        function genereerCode(lengte = 6) {
             const tekens = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let code = '';
             for (let i = 0; i < lengte; i++) {
@@ -163,7 +183,7 @@
                     const response = await fetch(url);
                     return await response.json();
                 } else {
-                    const response = await fetch(url + '?action=' + action, {
+                    const response = await fetch(API_URL + '?action=' + action, {
                         method: 'POST',
                         body: JSON.stringify(params)
                     });
@@ -184,14 +204,6 @@
                 return;
             }
 
-            // Check eerst of dit een captain code is
-            if (teamcode.includes('-')) {
-                huidigeCaptainCode = teamcode;
-                document.getElementById('captain-code-input').value = teamcode;
-                toonScherm('captain-login-scherm');
-                return;
-            }
-            
             const leden = await apiCall('getLeden', { teamcode });
             
             if (!leden || leden.length === 0) {
@@ -237,10 +249,12 @@
             
             let count = 3;
             document.getElementById('countdown').textContent = count;
+            speelPiep();
             
             const timer = setInterval(() => {
                 count--;
                 document.getElementById('countdown').textContent = count;
+                if (count > 0) speelPiep();
                 
                 if (count === 0) {
                     clearInterval(timer);
@@ -295,31 +309,10 @@
             });
         }
 
-        function startCaptainOnthulling(naam) {
+        async function startCaptainOnthulling(naam) {
             huidigeCaptain = naam;
-            toonScherm('captain-onthulling-scherm');
-            
-            let count = 5;
-            document.getElementById('captain-countdown').textContent = count;
-            document.getElementById('onthulling-content').innerHTML = `
-                <p class="instructie" style="font-size: 1.2em;">De captain is...</p>
-                <div id="captain-countdown" style="font-size: 120px; font-weight: 900; color: var(--widm-accent); text-align: center; margin: 20px 0; animation: pulse 1s infinite; text-shadow: 0 0 30px rgba(139, 195, 74, 0.5);">${count}</div>
-            `;
 
-            const timer = setInterval(() => {
-                count--;
-                const el = document.getElementById('captain-countdown');
-                if (el) el.textContent = count;
-                
-                if (count === 0) {
-                    clearInterval(timer);
-                    toonCaptainBevestiging();
-                }
-            }, 1000);
-        }
-
-        async function toonCaptainBevestiging() {
-            // Genereer captain code
+            // Genereer captain code meteen
             huidigeCaptainCode = huidigTeamcode + '-' + genereerCode(6);
             
             // Sla op in backend
@@ -329,12 +322,12 @@
                 captainnaam: huidigeCaptain
             }, 'POST');
 
-            // Toon onthulling
+            // Toon onthulling meteen
             document.getElementById('captain-naam-onthulling').innerHTML = `
                 <div class="captain-reveal">
                     🎖️ ${huidigeCaptain}
                 </div>
-                <p class="instructie">is de captain!</p>
+                <p class="instructie" style="text-align:center; margin-bottom: 20px;">is de captain!</p>
             `;
 
             // Reset QR sectie
@@ -342,11 +335,12 @@
             document.getElementById('captain-keuze-sectie').classList.remove('hidden');
             document.getElementById('qr-code').innerHTML = '';
 
-            toonScherm('captain-bevestiging-scherm');
+            toonScherm('captain-onthulling-scherm');
         }
 
         function captainOpZelfdeTelefoon() {
             localStorage.setItem('widm_teamcode', huidigTeamcode);
+            huidigTeamcode = huidigTeamcode;
             startSpel();
         }
 
@@ -354,11 +348,9 @@
             document.getElementById('captain-keuze-sectie').classList.add('hidden');
             document.getElementById('qr-sectie').classList.remove('hidden');
             
-            // Genereer QR code
             const qrContainer = document.getElementById('qr-code');
             qrContainer.innerHTML = '';
             
-            // De URL voor de captain om te scannen
             const captainURL = window.location.href.split('?')[0] + '?code=' + huidigeCaptainCode;
             
             new QRCode(qrContainer, {
@@ -374,10 +366,10 @@
 
         // ===== CAPTAIN LOGIN VIA QR =====
         async function captainLogin() {
-            const code = document.getElementById('captain-code-input').value.trim().toUpperCase();
+            const code = huidigeCaptainCode || document.getElementById('captain-code-input').value.trim().toUpperCase();
             
             if (!code) {
-                alert('Voer de captain-code in!');
+                alert('Geen captain code gevonden!');
                 return;
             }
 
@@ -403,7 +395,6 @@
                 if (!doorgaan) return;
             }
 
-            // Sla teamcode op en start spel
             localStorage.setItem('widm_teamcode', result.teamcode);
             huidigTeamcode = result.teamcode;
             startSpel();
@@ -450,7 +441,6 @@
         function toonBestandsnaam() {
             const input = document.getElementById('foto-input');
             const naam = document.getElementById('bestandsnaam');
-            
             if (input.files.length > 0) {
                 naam.textContent = `✓ ${input.files[0].name}`;
             } else {
@@ -470,7 +460,6 @@
             btn.disabled = true;
             btn.textContent = 'Uploaden...';
 
-            // Toon voortgangsbalk
             document.getElementById('voortgang-balk-container').classList.remove('hidden');
             let voortgang = 0;
             const voortgangInterval = setInterval(() => {
@@ -495,7 +484,6 @@
                 clearInterval(voortgangInterval);
 
                 if (uploadResult && uploadResult.success) {
-                    // Voortgang naar 100%
                     document.getElementById('voortgang-balk').style.width = '100%';
                     document.getElementById('voortgang-tekst').textContent = '100% ✓';
 
@@ -509,18 +497,17 @@
                         document.getElementById('voortgang-balk-container').classList.add('hidden');
                         document.getElementById('voortgang-balk').style.width = '0%';
                         btn.disabled = false;
-                        btn.textContent = 'Verstuur Opdracht';
+                        btn.textContent = 'Verstuur opdracht';
                         input.value = '';
                         document.getElementById('bestandsnaam').textContent = '';
                         updateSpelStatus();
                     }, 1000);
 
                 } else {
-                    clearInterval(voortgangInterval);
                     document.getElementById('voortgang-balk-container').classList.add('hidden');
                     alert('Uploaden mislukt. Probeer opnieuw.');
                     btn.disabled = false;
-                    btn.textContent = 'Verstuur Opdracht';
+                    btn.textContent = 'Verstuur opdracht';
                 }
             };
             
@@ -540,18 +527,15 @@
 
         // ===== INITIALISATIE =====
         window.onload = function() {
-            // Check of er een captain code in de URL zit (via QR scan)
             const urlParams = new URLSearchParams(window.location.search);
             const captainCode = urlParams.get('code');
 
             if (captainCode) {
-                // Captain heeft QR gescand
-                document.getElementById('captain-code-input').value = captainCode;
+                huidigeCaptainCode = captainCode;
                 toonScherm('captain-login-scherm');
                 return;
             }
 
-            // Check of team al ingelogd is
             const opgeslagenCode = localStorage.getItem('widm_teamcode');
             if (opgeslagenCode) {
                 huidigTeamcode = opgeslagenCode;
