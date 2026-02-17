@@ -155,14 +155,12 @@
         function toonPopup(tekst, metAnnuleer = false, callback = null) {
             popupCallback = callback;
             document.getElementById('popup-tekst').textContent = tekst;
-            
             const annuleerBtn = document.getElementById('popup-annuleer-btn');
             if (metAnnuleer) {
                 annuleerBtn.classList.remove('hidden');
             } else {
                 annuleerBtn.classList.add('hidden');
             }
-            
             document.getElementById('popup-overlay').classList.remove('hidden');
         }
 
@@ -360,10 +358,18 @@
             huidigeCaptain = naam;
             huidigeCaptainCode = huidigTeamcode + '-' + genereerCode(6);
             
+            // Sla captain code op in backend
             await apiCall('setCaptainCode', {
                 teamcode: huidigTeamcode,
                 captaincode: huidigeCaptainCode,
                 captainnaam: huidigeCaptain
+            }, 'POST');
+
+            // Update status naar wachten op upload
+            await apiCall('updateStatus', {
+                teamcode: huidigTeamcode,
+                status: 'Wachten_op_Upload',
+                url: ''
             }, 'POST');
 
             document.getElementById('captain-naam-onthulling').innerHTML = `
@@ -414,7 +420,6 @@
                 return;
             }
 
-            // Laadanimatie tonen
             document.getElementById('captain-start-btn').classList.add('hidden');
             document.getElementById('laad-animatie').classList.remove('hidden');
 
@@ -439,7 +444,7 @@
             }
 
             if (result.warning) {
-                toonPopup('⚠️ ' + result.message + '\n\nWil je toch doorgaan?', true, (doorgaan) => {
+                toonPopup('⚠️ ' + result.message + ' Wil je toch doorgaan?', true, (doorgaan) => {
                     if (doorgaan) {
                         localStorage.setItem('widm_teamcode', result.teamcode);
                         huidigTeamcode = result.teamcode;

@@ -3,228 +3,512 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wie is de Mol? - Berlijn</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Spelleider Dashboard - Wie is de Mol?</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --widm-green: #2D5016;
+            --widm-dark-green: #1a3009;
+            --widm-light-green: #4a7c2c;
+            --widm-accent: #8bc34a;
+            --dark: #0a0a0a;
+            --grey: #2a2a2a;
+            --light-grey: #3a3a3a;
+            --text-light: #e0e0e0;
+            --danger: #c62828;
+            --success: #388e3c;
+            --warning: #f39c12;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000000;
+            color: var(--text-light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, var(--widm-dark-green), var(--grey));
+            border-radius: 16px;
+            margin-bottom: 25px;
+            border: 1px solid var(--widm-green);
+        }
+
+        header h1 {
+            color: var(--widm-accent);
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: var(--text-light);
+            opacity: 0.7;
+        }
+
+        .timer-sectie {
+            background: linear-gradient(135deg, var(--grey), var(--dark));
+            border: 2px solid var(--widm-green);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .timer-display {
+            font-size: 4em;
+            font-weight: 900;
+            color: var(--widm-accent);
+            text-shadow: 0 0 30px rgba(139, 195, 74, 0.5);
+            margin: 15px 0;
+            letter-spacing: 5px;
+        }
+
+        .timer-display.urgent {
+            color: var(--danger);
+            text-shadow: 0 0 30px rgba(198, 40, 40, 0.5);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, var(--widm-accent), var(--widm-light-green));
+            color: #000;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(139, 195, 74, 0.4);
+        }
+
+        .start-btn:disabled {
+            background: var(--light-grey);
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .spel-gestart-badge {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .team-kaart {
+            background: linear-gradient(135deg, var(--grey), var(--dark));
+            border: 1px solid var(--widm-green);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .team-kaart:hover {
+            transform: translateY(-3px);
+        }
+
+        .team-header {
+            background: linear-gradient(135deg, var(--widm-dark-green), var(--widm-green));
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .team-naam {
+            font-size: 1.3em;
+            font-weight: 900;
+            color: white;
+        }
+
+        .team-code {
+            font-size: 0.8em;
+            color: var(--widm-accent);
+            background: rgba(0,0,0,0.3);
+            padding: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .team-body {
+            padding: 20px;
+        }
+
+        .team-info-rij {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--light-grey);
+        }
+
+        .team-info-rij:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            color: var(--widm-accent);
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 80px;
+        }
+
+        .info-waarde {
+            color: var(--text-light);
+            font-size: 0.95em;
+            text-align: right;
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .leden-lijst {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .lid-badge {
+            background: var(--light-grey);
+            color: var(--text-light);
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.85em;
+        }
+
+        .lid-badge.captain {
+            background: var(--widm-green);
+            color: white;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-rollen { background: #1a3a5c; color: #64b5f6; }
+        .status-wacht-upload { background: #3a2f0b; color: #f0e68c; }
+        .status-wacht-goed { background: #4a2000; color: #ffb74d; }
+        .status-goedgekeurd { background: #1a3a1a; color: #81c784; }
+        .status-onbekend { background: var(--light-grey); color: #aaa; }
+
+        .foto-sectie {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--light-grey);
+        }
+
+        .foto-preview {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            max-height: 200px;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .foto-preview:hover {
+            transform: scale(1.02);
+        }
+
+        .actie-knoppen {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .goedkeur-btn {
+            background: linear-gradient(135deg, var(--success), #2e7d32);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95em;
+        }
+
+        .goedkeur-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(56, 142, 60, 0.4);
+        }
+
+        .afkeur-btn {
+            background: linear-gradient(135deg, var(--danger), #b71c1c);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95em;
+        }
+
+        .afkeur-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(198, 40, 40, 0.4);
+        }
+
+        .refresh-info {
+            text-align: center;
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 20px;
+        }
+
+        .refresh-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--widm-accent);
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .popup-overlay.hidden { display: none; }
+
+        .popup-box {
+            background: var(--grey);
+            border-radius: 16px;
+            max-width: 500px;
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid var(--widm-green);
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, var(--widm-green), var(--widm-dark-green));
+            padding: 15px 20px;
+            color: white;
+            font-weight: 700;
+        }
+
+        .popup-body {
+            padding: 20px;
+        }
+
+        .popup-body p {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .popup-footer {
+            padding: 0 20px 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .popup-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1em;
+            background: var(--widm-green);
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .popup-btn:hover { background: var(--widm-light-green); }
+
+        .popup-annuleer {
+            background: var(--light-grey);
+            color: var(--text-light);
+        }
+
+        .popup-annuleer:hover { background: #4a4a4a; }
+
+        .geen-foto {
+            color: #666;
+            font-style: italic;
+            font-size: 0.9em;
+            text-align: center;
+            padding: 15px;
+            background: var(--dark);
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .laad-container {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .laad-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid var(--light-grey);
+            border-top: 6px solid var(--widm-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spel-afgelopen {
+            background: linear-gradient(135deg, #3a0a0a, #1a0000);
+            border: 2px solid var(--danger);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .spel-afgelopen h2 {
+            color: var(--danger);
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .timer-display { font-size: 2.5em; }
+            .teams-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
-    <!-- Eigen Popup -->
     <div id="popup-overlay" class="popup-overlay hidden">
         <div class="popup-box">
-            <div class="popup-header">
-                <span>🕵️ Wie is de Mol? - Berlijn</span>
-            </div>
+            <div class="popup-header">🕵️ Spelleider dashboard</div>
             <div class="popup-body">
                 <p id="popup-tekst"></p>
             </div>
             <div class="popup-footer">
-                <button id="popup-ok-btn" onclick="sluitPopup()">OK</button>
-                <button id="popup-annuleer-btn" onclick="annuleerPopup()" class="hidden">Annuleer</button>
+                <button class="popup-btn" onclick="sluitPopup()">OK</button>
+                <button id="popup-annuleer" class="popup-btn popup-annuleer hidden" onclick="annuleerPopup()">Annuleer</button>
             </div>
         </div>
     </div>
 
-    <div class="container">
-        <header>
-            <h1>🕵️ Wie is de Mol?</h1>
-            <p class="subtitle">Berlijn Edition</p>
-        </header>
+    <header>
+        <h1>🕵️ Spelleider dashboard</h1>
+        <p>Wie is de Mol? - Berlijn Edition</p>
+    </header>
 
-        <!-- Scherm 1: Team Login -->
-        <div id="login-scherm" class="scherm hidden">
-            <h2>Team login</h2>
-            <p class="instructie">Voer je teamcode in om te beginnen.</p>
-            <input type="text" id="teamcode-input" placeholder="Voer je teamcode in" autocomplete="off">
-            <button onclick="teamLogin()">Inloggen</button>
+    <div class="timer-sectie">
+        <div id="spel-gestart-badge" style="display:none;">
+            <span class="spel-gestart-badge">🟢 Spel is gestart</span>
         </div>
+        <div class="timer-display" id="timer-display">2:00:00</div>
+        <button class="start-btn" id="start-btn" onclick="bevestigStart()">🚀 Start het spel!</button>
+        <p id="start-tijd-tekst" style="color: #666; font-size: 0.85em; margin-top: 10px;"></p>
+    </div>
 
-        <!-- Scherm 2: Rollen Verdelen -->
-        <div id="rollen-scherm" class="scherm hidden">
-            <h2>Rollen verdelen</h2>
-            <p class="instructie">Elk teamlid bekijkt individueel zijn of haar rol. Geef de telefoon door!</p>
-            <div id="leden-lijst"></div>
-        </div>
+    <p class="refresh-info">
+        <span class="refresh-dot"></span>
+        Dashboard ververst automatisch elke 10 seconden
+    </p>
 
-        <!-- Scherm 3: Privacy Check -->
-        <div id="privacy-scherm" class="scherm hidden">
-            <h2 id="privacy-naam"></h2>
-            <p class="instructie">Zorg dat niemand meekijkt...</p>
-            <div id="countdown">3</div>
-        </div>
-
-        <!-- Scherm 4: Rol Onthulling -->
-        <div id="rol-scherm" class="scherm hidden">
-            <div id="rol-content"></div>
-            <button onclick="volgendeSpeler()">Ik heb het gezien</button>
-        </div>
-
-        <!-- Scherm 5: Captain Selectie -->
-        <div id="captain-scherm" class="scherm hidden">
-            <h2>Kies een captain</h2>
-            <p class="instructie">De captain bestuurt de app tijdens het spel. Wie wordt het?</p>
-            <div id="captain-lijst"></div>
-        </div>
-
-        <!-- Scherm 6: Captain Onthulling -->
-        <div id="captain-onthulling-scherm" class="scherm hidden">
-            <div id="captain-naam-onthulling"></div>
-            <div id="captain-keuze-sectie">
-                <div style="background: #3a3a3a; padding: 20px; border-radius: 16px; margin: 20px 0; border-left: 5px solid #8bc34a;">
-                    <p style="color: #e0e0e0; line-height: 1.7;">Als captain vorm jij de schakel tussen de telefoon met aanwijzingen en opdrachten en jouw team. Je speelt het spel op jouw eigen telefoon.</p>
-                    <br>
-                    <p style="color: #8bc34a; font-weight: bold;">Lees jij dit op jouw eigen telefoon?</p>
-                </div>
-                <button id="ja-btn" onclick="captainOpZelfdeTelefoon()">✅ Ja, start het spel!</button>
-                <button id="nee-btn" onclick="toonQRCode()" style="background: #3a3a3a; margin-top: 10px;">📱 Nee, toon QR-code</button>
-            </div>
-            <div id="qr-sectie" class="hidden">
-                <p class="instructie">Laat de captain deze QR-code scannen op zijn of haar telefoon:</p>
-                <div id="qr-code"></div>
-                <p id="captain-code-tekst" style="font-size: 0.85em; color: #aaa; margin-top: 10px; text-align: center;"></p>
-            </div>
-        </div>
-
-        <!-- Scherm 7: Captain Login (via QR) -->
-        <div id="captain-login-scherm" class="scherm hidden">
-            <h2>Captain login</h2>
-            <p class="instructie">Welkom captain! Klik op de knop om het spel te starten.</p>
-            <div id="laad-animatie" class="hidden">
-                <div class="laad-spinner"></div>
-                <p style="color: #8bc34a; margin-top: 15px;">Even geduld...</p>
-            </div>
-            <input type="text" id="captain-code-input" placeholder="Captain code" autocomplete="off" style="display:none;">
-            <button id="captain-start-btn" onclick="captainLogin()">🚀 Start het spel!</button>
-        </div>
-
-        <!-- Scherm 8: Spel Scherm -->
-        <div id="spel-scherm" class="scherm hidden">
-            <div class="status-badge" id="status-badge">Huidige locatie</div>
-            <h2 id="locatie-naam"></h2>
-            
-            <div class="opdracht-box">
-                <h3>📋 De opdracht</h3>
-                <p id="opdracht-tekst"></p>
-            </div>
-
-            <div id="upload-sectie">
-                <label for="foto-input" class="file-label">
-                    📸 Kies foto of video
-                </label>
-                <input type="file" id="foto-input" accept="image/*,video/*" onchange="toonBestandsnaam()">
-                <p id="bestandsnaam"></p>
-                <div id="voortgang-balk-container" class="hidden">
-                    <div id="voortgang-balk"></div>
-                    <p id="voortgang-tekst">Uploaden...</p>
-                </div>
-                <button onclick="verstuurBewijs()" id="upload-btn">Verstuur opdracht</button>
-            </div>
-
-            <div id="wacht-sectie" class="hidden">
-                <div class="wacht-box">
-                    <p>⏳ De spelleider bekijkt jullie bewijs...</p>
-                </div>
-            </div>
-
-            <div id="hint-sectie" class="hidden">
-                <div class="success-box">
-                    <h3>✅ Opdracht voltooid!</h3>
-                    <p class="hint-label">Hint naar de volgende locatie:</p>
-                    <p id="hint-tekst" class="hint-text"></p>
-                    <button onclick="naarVolgendeLocatie()" class="success-btn">We zijn er!</button>
-                </div>
-            </div>
+    <div id="teams-container">
+        <div class="laad-container">
+            <div class="laad-spinner"></div>
+            <p style="color: #666;">Dashboard laden...</p>
         </div>
     </div>
 
     <script>
-        // ===== CONFIGURATIE =====
         const API_URL = "https://script.google.com/macros/s/AKfycbxtZUrnqR37X_HxUodU7U5AlYwrIhbtA8xgGDvlzqYReY86UrMcqIOvyJ1osRkTX-Alww/exec";
+        const SPEL_DUUR = 2 * 60 * 60 * 1000;
 
-        // ===== GLOBALE VARIABELEN =====
-        let huidigTeamcode = '';
-        let alleLeden = [];
-        let overgeblevenLeden = [];
-        let huidigeLid = '';
-        let huidigeCaptain = '';
-        let huidigeCaptainCode = '';
-        let spelInterval = null;
+        let timerInterval = null;
+        let startTijd = null;
+        let spelGestart = false;
         let popupCallback = null;
 
-        // ===== EIGEN POPUP =====
+        // ===== POPUP =====
         function toonPopup(tekst, metAnnuleer = false, callback = null) {
             popupCallback = callback;
             document.getElementById('popup-tekst').textContent = tekst;
-            const annuleerBtn = document.getElementById('popup-annuleer-btn');
-            if (metAnnuleer) {
-                annuleerBtn.classList.remove('hidden');
-            } else {
-                annuleerBtn.classList.add('hidden');
-            }
+            const annuleer = document.getElementById('popup-annuleer');
+            metAnnuleer ? annuleer.classList.remove('hidden') : annuleer.classList.add('hidden');
             document.getElementById('popup-overlay').classList.remove('hidden');
         }
 
         function sluitPopup() {
             document.getElementById('popup-overlay').classList.add('hidden');
-            if (popupCallback) {
-                popupCallback(true);
-                popupCallback = null;
-            }
+            if (popupCallback) { popupCallback(true); popupCallback = null; }
         }
 
         function annuleerPopup() {
             document.getElementById('popup-overlay').classList.add('hidden');
-            if (popupCallback) {
-                popupCallback(false);
-                popupCallback = null;
-            }
+            if (popupCallback) { popupCallback(false); popupCallback = null; }
         }
 
-        // ===== PIEPJE =====
-        function speelPiep() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-                oscillator.start(audioCtx.currentTime);
-                oscillator.stop(audioCtx.currentTime + 0.3);
-            } catch(e) {
-                console.log('Audio niet beschikbaar');
-            }
-        }
-
-        // ===== HELPER FUNCTIES =====
-        function toonScherm(schermId) {
-            document.querySelectorAll('.scherm').forEach(scherm => {
-                scherm.classList.add('hidden');
-            });
-            document.getElementById(schermId).classList.remove('hidden');
-        }
-
-        function genereerCode(lengte = 6) {
-            const tekens = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < lengte; i++) {
-                code += tekens.charAt(Math.floor(Math.random() * tekens.length));
-            }
-            return code;
-        }
-
+        // ===== API =====
         async function apiCall(action, params = {}, method = 'GET') {
             try {
                 const url = new URL(API_URL);
                 url.searchParams.append('action', action);
-                
+
                 if (method === 'GET') {
-                    Object.keys(params).forEach(key => {
-                        url.searchParams.append(key, params[key]);
-                    });
+                    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
                     const response = await fetch(url);
                     return await response.json();
                 } else {
@@ -240,368 +524,205 @@
             }
         }
 
-        // ===== TEAM LOGIN =====
-        async function teamLogin() {
-            const teamcode = document.getElementById('teamcode-input').value.trim().toUpperCase();
+        // ===== TIMER =====
+        function startTimer(startDatum) {
+            if (timerInterval) clearInterval(timerInterval);
             
-            if (!teamcode) {
-                toonPopup('Voer een teamcode in!');
-                return;
-            }
+            timerInterval = setInterval(() => {
+                const nu = new Date().getTime();
+                const verstreken = nu - startDatum;
+                const resterend = SPEL_DUUR - verstreken;
 
-            const leden = await apiCall('getLeden', { teamcode });
-            
-            if (!leden || leden.length === 0) {
-                toonPopup('Ongeldige teamcode! Probeer opnieuw.');
-                return;
-            }
-            
-            huidigTeamcode = teamcode;
-            alleLeden = leden;
-            overgeblevenLeden = [...leden];
-            
-            toonRollenScherm();
-        }
+                const timerEl = document.getElementById('timer-display');
 
-        // ===== ROLLEN VERDELEN =====
-        function toonRollenScherm() {
-            toonScherm('rollen-scherm');
-            updateLedenLijst();
-        }
+                if (resterend <= 0) {
+                    clearInterval(timerInterval);
+                    timerEl.textContent = '0:00:00';
+                    timerEl.classList.add('urgent');
+                    toonSpelAfgelopen();
+                    return;
+                }
 
-        function updateLedenLijst() {
-            const lijst = document.getElementById('leden-lijst');
-            lijst.innerHTML = '';
-            
-            if (overgeblevenLeden.length === 0) {
-                toonCaptainScherm();
-                return;
-            }
-            
-            overgeblevenLeden.forEach(naam => {
-                const btn = document.createElement('button');
-                btn.className = 'member-btn';
-                btn.textContent = naam;
-                btn.onclick = () => startPrivacyCheck(naam);
-                lijst.appendChild(btn);
-            });
-        }
+                const uren = Math.floor(resterend / (1000 * 60 * 60));
+                const minuten = Math.floor((resterend % (1000 * 60 * 60)) / (1000 * 60));
+                const seconden = Math.floor((resterend % (1000 * 60)) / 1000);
 
-        function startPrivacyCheck(naam) {
-            huidigeLid = naam;
-            document.getElementById('privacy-naam').textContent = naam;
-            toonScherm('privacy-scherm');
-            
-            let count = 3;
-            document.getElementById('countdown').textContent = count;
-            speelPiep();
-            
-            const timer = setInterval(() => {
-                count--;
-                document.getElementById('countdown').textContent = count;
-                speelPiep();
-                
-                if (count === 0) {
-                    clearInterval(timer);
-                    toonRol();
+                timerEl.textContent = `${uren}:${String(minuten).padStart(2, '0')}:${String(seconden).padStart(2, '0')}`;
+
+                if (resterend < 15 * 60 * 1000) {
+                    timerEl.classList.add('urgent');
                 }
             }, 1000);
         }
 
-        async function toonRol() {
-            const data = await apiCall('onthulRol', {
-                teamcode: huidigTeamcode,
-                naam: huidigeLid
-            });
-            
-            if (!data || data.error) {
-                toonPopup('Fout bij ophalen rol. Probeer opnieuw.');
-                return;
-            }
-            
-            const rolContent = document.getElementById('rol-content');
-            const isMol = data.rol === "DE MOL";
-            
-            rolContent.innerHTML = `
-                <h2>Hoi ${data.naam},</h2>
-                <div class="${isMol ? 'rol-mol' : 'rol-kandidaat'}">
-                    ${data.rol}
-                </div>
-                <p class="instructie" style="margin-top: 20px;">
-                    ${isMol ? '🤫 Vertel dit aan niemand!' : '🕵️ Zoek uit wie de mol is!'}
-                </p>
+        function toonSpelAfgelopen() {
+            const container = document.getElementById('teams-container');
+            const afgelopenDiv = document.createElement('div');
+            afgelopenDiv.className = 'spel-afgelopen';
+            afgelopenDiv.innerHTML = `
+                <h2>⏰ Spel afgelopen!</h2>
+                <p style="color: var(--text-light);">De speeltijd van 2 uur is verstreken.</p>
             `;
-            
-            toonScherm('rol-scherm');
+            container.insertBefore(afgelopenDiv, container.firstChild);
         }
 
-        function volgendeSpeler() {
-            overgeblevenLeden = overgeblevenLeden.filter(naam => naam !== huidigeLid);
-            toonRollenScherm();
-        }
-
-        // ===== CAPTAIN SELECTIE =====
-        function toonCaptainScherm() {
-            toonScherm('captain-scherm');
-            const lijst = document.getElementById('captain-lijst');
-            lijst.innerHTML = '';
-            
-            alleLeden.forEach(naam => {
-                const btn = document.createElement('button');
-                btn.textContent = naam;
-                btn.onclick = () => startCaptainOnthulling(naam);
-                lijst.appendChild(btn);
-            });
-        }
-
-        async function startCaptainOnthulling(naam) {
-            huidigeCaptain = naam;
-            huidigeCaptainCode = huidigTeamcode + '-' + genereerCode(6);
-            
-            // Sla captain code op in backend
-            await apiCall('setCaptainCode', {
-                teamcode: huidigTeamcode,
-                captaincode: huidigeCaptainCode,
-                captainnaam: huidigeCaptain
-            }, 'POST');
-
-            // Update status naar wachten op upload
-            await apiCall('updateStatus', {
-                teamcode: huidigTeamcode,
-                status: 'Wachten_op_Upload',
-                url: ''
-            }, 'POST');
-
-            document.getElementById('captain-naam-onthulling').innerHTML = `
-                <div class="captain-reveal">
-                    🎖️ ${huidigeCaptain}
-                </div>
-                <p style="color: #e0e0e0; text-align: center; margin-bottom: 20px;">is de captain!</p>
-            `;
-
-            document.getElementById('qr-sectie').classList.add('hidden');
-            document.getElementById('captain-keuze-sectie').classList.remove('hidden');
-            document.getElementById('qr-code').innerHTML = '';
-
-            toonScherm('captain-onthulling-scherm');
-        }
-
-        function captainOpZelfdeTelefoon() {
-            localStorage.setItem('widm_teamcode', huidigTeamcode);
-            startSpel();
-        }
-
-        function toonQRCode() {
-            document.getElementById('captain-keuze-sectie').classList.add('hidden');
-            document.getElementById('qr-sectie').classList.remove('hidden');
-            
-            const qrContainer = document.getElementById('qr-code');
-            qrContainer.innerHTML = '';
-            
-            const captainURL = window.location.href.split('?')[0] + '?code=' + huidigeCaptainCode;
-            
-            new QRCode(qrContainer, {
-                text: captainURL,
-                width: 200,
-                height: 200,
-                colorDark: '#1a3009',
-                colorLight: '#ffffff',
-            });
-
-            document.getElementById('captain-code-tekst').textContent = 'Code: ' + huidigeCaptainCode;
-        }
-
-        // ===== CAPTAIN LOGIN VIA QR =====
-        async function captainLogin() {
-            const code = huidigeCaptainCode || document.getElementById('captain-code-input').value.trim().toUpperCase();
-            
-            if (!code) {
-                toonPopup('Geen captain code gevonden!');
-                return;
-            }
-
-            document.getElementById('captain-start-btn').classList.add('hidden');
-            document.getElementById('laad-animatie').classList.remove('hidden');
-
-            const result = await apiCall('checkCaptainCode', { code });
-
-            document.getElementById('laad-animatie').classList.add('hidden');
-            document.getElementById('captain-start-btn').classList.remove('hidden');
-
-            if (!result) {
-                toonPopup('Verbindingsfout. Probeer opnieuw.');
-                return;
-            }
-
-            if (result.error === 'verlopen') {
-                toonPopup('❌ Deze code is verlopen! De spelleider moet een nieuwe code genereren.');
-                return;
-            }
-
-            if (result.error) {
-                toonPopup('Ongeldige code! Controleer de code en probeer opnieuw.');
-                return;
-            }
-
-            if (result.warning) {
-                toonPopup('⚠️ ' + result.message + ' Wil je toch doorgaan?', true, (doorgaan) => {
-                    if (doorgaan) {
-                        localStorage.setItem('widm_teamcode', result.teamcode);
-                        huidigTeamcode = result.teamcode;
-                        startSpel();
+        // ===== START SPEL =====
+        function bevestigStart() {
+            toonPopup('Weet je zeker dat je het spel wilt starten? De timer van 2 uur begint dan te lopen!', true, async (bevestigd) => {
+                if (bevestigd) {
+                    const result = await apiCall('startSpel', {}, 'POST');
+                    if (result && result.success) {
+                        spelGestart = true;
+                        startTijd = new Date(result.startTijd).getTime();
+                        updateStartUI();
+                        startTimer(startTijd);
+                        laadDashboard();
+                    } else {
+                        toonPopup('Fout bij starten van het spel. Probeer opnieuw.');
                     }
-                });
-                return;
-            }
-
-            localStorage.setItem('widm_teamcode', result.teamcode);
-            huidigTeamcode = result.teamcode;
-            startSpel();
-        }
-
-        // ===== SPEL =====
-        function startSpel() {
-            toonScherm('spel-scherm');
-            updateSpelStatus();
-            if (spelInterval) clearInterval(spelInterval);
-            spelInterval = setInterval(updateSpelStatus, 10000);
-        }
-
-        async function updateSpelStatus() {
-            const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
-            if (!teamcode) return;
-
-            const data = await apiCall('getSpelData', { teamcode });
-            
-            if (!data || data.error) {
-                console.error('Fout bij ophalen speldata:', data?.error);
-                return;
-            }
-            
-            document.getElementById('locatie-naam').textContent = data.locatieNaam;
-            document.getElementById('opdracht-tekst').textContent = data.opdracht;
-            
-            if (data.status === "Wachten_op_Upload" || data.status === "Rollen_Verdelen") {
-                document.getElementById('upload-sectie').classList.remove('hidden');
-                document.getElementById('wacht-sectie').classList.add('hidden');
-                document.getElementById('hint-sectie').classList.add('hidden');
-            } else if (data.status === "Wachten op goedkeuring" || data.status === "Wachten_op_Goedkeuring") {
-                document.getElementById('upload-sectie').classList.add('hidden');
-                document.getElementById('wacht-sectie').classList.remove('hidden');
-                document.getElementById('hint-sectie').classList.add('hidden');
-            } else if (data.status === "Goedgekeurd") {
-                document.getElementById('upload-sectie').classList.add('hidden');
-                document.getElementById('wacht-sectie').classList.add('hidden');
-                document.getElementById('hint-sectie').classList.remove('hidden');
-                document.getElementById('hint-tekst').textContent = data.hint;
-            }
-        }
-
-        function toonBestandsnaam() {
-            const input = document.getElementById('foto-input');
-            const naam = document.getElementById('bestandsnaam');
-            if (input.files.length > 0) {
-                naam.textContent = `✓ ${input.files[0].name}`;
-            } else {
-                naam.textContent = '';
-            }
-        }
-
-        async function verstuurBewijs() {
-            const input = document.getElementById('foto-input');
-            
-            if (!input.files || input.files.length === 0) {
-                toonPopup('Selecteer eerst een foto of video!');
-                return;
-            }
-            
-            const btn = document.getElementById('upload-btn');
-            btn.disabled = true;
-            btn.textContent = 'Uploaden...';
-
-            document.getElementById('voortgang-balk-container').classList.remove('hidden');
-            let voortgang = 0;
-            const voortgangInterval = setInterval(() => {
-                voortgang = Math.min(voortgang + Math.random() * 15, 90);
-                document.getElementById('voortgang-balk').style.width = voortgang + '%';
-                document.getElementById('voortgang-tekst').textContent = Math.round(voortgang) + '%';
-            }, 300);
-            
-            const file = input.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = async function(e) {
-                const base64 = e.target.result;
-                const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
-                
-                const uploadResult = await apiCall('uploadFoto', {
-                    base64: base64,
-                    filename: file.name,
-                    teamcode: teamcode
-                }, 'POST');
-                
-                clearInterval(voortgangInterval);
-
-                if (uploadResult && uploadResult.success) {
-                    document.getElementById('voortgang-balk').style.width = '100%';
-                    document.getElementById('voortgang-tekst').textContent = '100% ✓';
-
-                    await apiCall('updateStatus', {
-                        teamcode: teamcode,
-                        status: 'Wachten op goedkeuring',
-                        url: uploadResult.url
-                    }, 'POST');
-                    
-                    setTimeout(() => {
-                        document.getElementById('voortgang-balk-container').classList.add('hidden');
-                        document.getElementById('voortgang-balk').style.width = '0%';
-                        btn.disabled = false;
-                        btn.textContent = 'Verstuur opdracht';
-                        input.value = '';
-                        document.getElementById('bestandsnaam').textContent = '';
-                        updateSpelStatus();
-                    }, 1000);
-
-                } else {
-                    document.getElementById('voortgang-balk-container').classList.add('hidden');
-                    toonPopup('Uploaden mislukt. Probeer opnieuw.');
-                    btn.disabled = false;
-                    btn.textContent = 'Verstuur opdracht';
                 }
-            };
-            
-            reader.readAsDataURL(file);
+            });
         }
 
-        async function naarVolgendeLocatie() {
-            const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
-            const result = await apiCall('volgendeLocatie', { teamcode }, 'POST');
-            
-            if (result && result.success) {
-                updateSpelStatus();
-            } else {
-                toonPopup('Fout bij naar volgende locatie gaan. Probeer opnieuw.');
+        function updateStartUI() {
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('start-btn').textContent = '✅ Spel is gestart';
+            document.getElementById('spel-gestart-badge').style.display = 'block';
+            if (startTijd) {
+                const datum = new Date(startTijd);
+                document.getElementById('start-tijd-tekst').textContent = 
+                    `Gestart om ${datum.getHours()}:${String(datum.getMinutes()).padStart(2, '0')}`;
             }
+        }
+
+        // ===== GOEDKEUREN / AFKEUREN =====
+        async function keurGoed(teamcode) {
+            const result = await apiCall('keurGoed', { teamcode }, 'POST');
+            if (result && result.success) {
+                laadDashboard();
+            } else {
+                toonPopup('Fout bij goedkeuren. Probeer opnieuw.');
+            }
+        }
+
+        async function keurAf(teamcode) {
+            toonPopup('Weet je zeker dat je dit bewijs wilt afkeuren? Het team moet dan opnieuw een foto sturen.', true, async (bevestigd) => {
+                if (bevestigd) {
+                    const result = await apiCall('keurAf', { teamcode }, 'POST');
+                    if (result && result.success) {
+                        laadDashboard();
+                    } else {
+                        toonPopup('Fout bij afkeuren. Probeer opnieuw.');
+                    }
+                }
+            });
+        }
+
+        // ===== DASHBOARD LADEN =====
+        function getStatusBadge(status) {
+            switch(status) {
+                case 'Rollen_Verdelen': return '<span class="status-badge status-rollen">Rollen verdelen</span>';
+                case 'Wachten_op_Upload': return '<span class="status-badge status-wacht-upload">Wacht op foto</span>';
+                case 'Wachten op goedkeuring':
+                case 'Wachten_op_Goedkeuring': return '<span class="status-badge status-wacht-goed">Wacht op goedkeuring</span>';
+                case 'Goedgekeurd': return '<span class="status-badge status-goedgekeurd">✅ Goedgekeurd</span>';
+                default: return '<span class="status-badge status-onbekend">Onbekend</span>';
+            }
+        }
+
+        async function laadDashboard() {
+            const data = await apiCall('getDashboard');
+
+            if (!data || data.error) {
+                document.getElementById('teams-container').innerHTML = `
+                    <p style="text-align:center; color: #666;">Fout bij laden dashboard. Probeer te verversen.</p>
+                `;
+                return;
+            }
+
+            // Update spel status
+            if (data.spelGestart && !spelGestart) {
+                spelGestart = true;
+                startTijd = new Date(data.startTijd).getTime();
+                updateStartUI();
+                startTimer(startTijd);
+            }
+
+            // Bouw teams HTML
+            let teamsHTML = '<div class="teams-grid">';
+
+            data.teams.forEach(team => {
+                const heeftFoto = team.fotoUrl && team.fotoUrl !== '';
+                const wachtOpGoedkeuring = team.status === 'Wachten op goedkeuring' || team.status === 'Wachten_op_Goedkeuring';
+
+                let ledenHTML = '<div class="leden-lijst">';
+                team.leden.forEach(lid => {
+                    const isCaptain = lid === team.captainNaam;
+                    ledenHTML += `<span class="lid-badge ${isCaptain ? 'captain' : ''}">${lid}${isCaptain ? ' 🎖️' : ''}</span>`;
+                });
+                ledenHTML += '</div>';
+
+                let fotoHTML = '';
+                if (heeftFoto) {
+                    fotoHTML = `
+                        <div class="foto-sectie">
+                            <img src="${team.fotoUrl}" class="foto-preview" 
+                                onclick="window.open('${team.fotoUrl}', '_blank')"
+                                onerror="this.style.display='none'"
+                                alt="Bewijs foto">
+                            ${wachtOpGoedkeuring ? `
+                                <div class="actie-knoppen">
+                                    <button class="goedkeur-btn" onclick="keurGoed('${team.teamcode}')">✅ Goedkeuren</button>
+                                    <button class="afkeur-btn" onclick="keurAf('${team.teamcode}')">❌ Afkeuren</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else if (wachtOpGoedkeuring) {
+                    fotoHTML = `
+                        <div class="foto-sectie">
+                            <div class="geen-foto">📎 Bewijs ontvangen (geen preview beschikbaar)</div>
+                            <div class="actie-knoppen">
+                                <button class="goedkeur-btn" onclick="keurGoed('${team.teamcode}')">✅ Goedkeuren</button>
+                                <button class="afkeur-btn" onclick="keurAf('${team.teamcode}')">❌ Afkeuren</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                teamsHTML += `
+                    <div class="team-kaart">
+                        <div class="team-header">
+                            <span class="team-naam">${team.teamNaam}</span>
+                            <span class="team-code">${team.teamcode}</span>
+                        </div>
+                        <div class="team-body">
+                            <div class="team-info-rij">
+                                <span class="info-label">Leden</span>
+                                <span class="info-waarde">${ledenHTML}</span>
+                            </div>
+                            <div class="team-info-rij">
+                                <span class="info-label">Locatie</span>
+                                <span class="info-waarde">${team.locatieNaam || 'Onbekend'}</span>
+                            </div>
+                            <div class="team-info-rij">
+                                <span class="info-label">Status</span>
+                                <span class="info-waarde">${getStatusBadge(team.status)}</span>
+                            </div>
+                            ${fotoHTML}
+                        </div>
+                    </div>
+                `;
+            });
+
+            teamsHTML += '</div>';
+            document.getElementById('teams-container').innerHTML = teamsHTML;
         }
 
         // ===== INITIALISATIE =====
         window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const captainCode = urlParams.get('code');
-
-            if (captainCode) {
-                huidigeCaptainCode = captainCode;
-                toonScherm('captain-login-scherm');
-                return;
-            }
-
-            const opgeslagenCode = localStorage.getItem('widm_teamcode');
-            if (opgeslagenCode) {
-                huidigTeamcode = opgeslagenCode;
-                startSpel();
-            } else {
-                toonScherm('login-scherm');
-            }
+            laadDashboard();
+            setInterval(laadDashboard, 10000);
         };
     </script>
 </body>
