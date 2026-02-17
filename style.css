@@ -418,3 +418,68 @@ input[type="file"] {
         padding: 30px 20px;
     }
 }
+
+/* Captain Reveal */
+.captain-reveal {
+    background: linear-gradient(135deg, var(--widm-green) 0%, var(--widm-dark-green) 100%);
+    color: var(--widm-accent);
+    padding: 30px;
+    border-radius: 16px;
+    margin: 20px 0;
+    font-size: 2em;
+    font-weight: 900;
+    text-align: center;
+    text-transform: uppercase;
+    box-shadow: 0 10px 30px rgba(45, 80, 22, 0.5);
+    letter-spacing: 2px;
+    animation: slideIn 0.5s ease;
+}
+
+/* QR Code */
+#qr-code {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 16px;
+}
+
+/* Waarschuwing */
+.waarschuwing {
+    background: #3a2f0b;
+    border: 2px solid #8b7329;
+    color: #f0e68c;
+    padding: 15px;
+    border-radius: 12px;
+    margin: 15px 0;
+    text-align: center;
+}
+
+/* Voortgangsbalk */
+#voortgang-balk-container {
+    background: var(--light-grey);
+    border-radius: 10px;
+    height: 30px;
+    margin: 15px 0;
+    overflow: hidden;
+    position: relative;
+}
+
+#voortgang-balk {
+    background: linear-gradient(90deg, var(--widm-green), var(--widm-accent));
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+}
+
+#voortgang-tekst {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9em;
+}
