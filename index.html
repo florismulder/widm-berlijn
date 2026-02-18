@@ -302,20 +302,13 @@
     
     const timer = setInterval(() => {
         count--;
+        document.getElementById('countdown').textContent = count;
+        speelPiep();
         
-        if (count > 0) {
-            document.getElementById('countdown').textContent = count;
-            speelPiep();
-        } else if (count === 0) {
-            // Toon 0 heel kort
-            document.getElementById('countdown').textContent = 0;
-            speelPiep();
+        if (count === 0) {
             clearInterval(timer);
-            
-            // Na 300ms direct naar rol
-            setTimeout(() => {
-                toonRol();
-            }, 300);
+            // Direct naar rol zonder 0 te tonen
+            toonRol();
         }
     }, 1000);
 }
