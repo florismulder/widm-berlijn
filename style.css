@@ -602,13 +602,14 @@ input[type="file"] {
 }
 
 /* Centreer spel scherm elementen */
-#spel-scherm .status-badge {
-    display: block;
-    text-align: center;
-    margin: 0 auto 10px auto;
-    width: fit-content;
+.status-badge {
+    text-align: center !important;
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: fit-content !important;
 }
 
-#spel-scherm h2 {
-    text-align: center;
+#locatie-naam {
+    text-align: center !important;
 }
