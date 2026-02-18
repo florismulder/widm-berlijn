@@ -99,6 +99,9 @@
 
         <!-- Scherm 8: Spel Scherm -->
         <div id="spel-scherm" class="scherm hidden">
+            <!-- Timer bovenaan -->
+            <div id="spel-timer" class="spel-timer hidden">⏱️ <span id="spel-timer-tekst">2:00:00</span></div>
+            
             <div class="status-badge" id="status-badge">Huidige locatie</div>
             <h2 id="locatie-naam"></h2>
             
@@ -136,10 +139,10 @@
             </div>
         </div>
     </div>
-
     <script>
         // ===== CONFIGURATIE =====
         const API_URL = "https://script.google.com/macros/s/AKfycbxtZUrnqR37X_HxUodU7U5AlYwrIhbtA8xgGDvlzqYReY86UrMcqIOvyJ1osRkTX-Alww/exec";
+        const SPEL_DUUR = 2 * 60 * 60 * 1000;
 
         // ===== GLOBALE VARIABELEN =====
         let huidigTeamcode = '';
@@ -149,6 +152,7 @@
         let huidigeCaptain = '';
         let huidigeCaptainCode = '';
         let spelInterval = null;
+        let timerInterval = null;
         let popupCallback = null;
 
         // ===== EIGEN POPUP =====
@@ -358,14 +362,12 @@
             huidigeCaptain = naam;
             huidigeCaptainCode = huidigTeamcode + '-' + genereerCode(6);
             
-            // Sla captain code op in backend
             await apiCall('setCaptainCode', {
                 teamcode: huidigTeamcode,
                 captaincode: huidigeCaptainCode,
                 captainnaam: huidigeCaptain
             }, 'POST');
 
-            // Update status naar wachten op upload
             await apiCall('updateStatus', {
                 teamcode: huidigTeamcode,
                 status: 'Wachten_op_Upload',
@@ -459,6 +461,39 @@
             startSpel();
         }
 
+        // ===== SPEL TIMER =====
+        function startSpelTimer(startDatum) {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            const timerEl = document.getElementById('spel-timer');
+            const timerTekstEl = document.getElementById('spel-timer-tekst');
+            timerEl.classList.remove('hidden');
+            
+            timerInterval = setInterval(() => {
+                const nu = new Date().getTime();
+                const verstreken = nu - startDatum;
+                const resterend = SPEL_DUUR - verstreken;
+
+                if (resterend <= 0) {
+                    clearInterval(timerInterval);
+                    timerTekstEl.textContent = '0:00:00';
+                    timerEl.classList.add('urgent');
+                    toonPopup('⏰ De speeltijd is voorbij! Het spel is afgelopen.');
+                    return;
+                }
+
+                const uren = Math.floor(resterend / (1000 * 60 * 60));
+                const minuten = Math.floor((resterend % (1000 * 60 * 60)) / (1000 * 60));
+                const seconden = Math.floor((resterend % (1000 * 60)) / 1000);
+
+                timerTekstEl.textContent = `${uren}:${String(minuten).padStart(2, '0')}:${String(seconden).padStart(2, '0')}`;
+
+                if (resterend < 15 * 60 * 1000) {
+                    timerEl.classList.add('urgent');
+                }
+            }, 1000);
+        }
+
         // ===== SPEL =====
         function startSpel() {
             toonScherm('spel-scherm');
@@ -476,6 +511,12 @@
             if (!data || data.error) {
                 console.error('Fout bij ophalen speldata:', data?.error);
                 return;
+            }
+
+            // Start timer als spel is gestart
+            if (data.spelGestart && data.startTijd && !timerInterval) {
+                const startDatum = new Date(data.startTijd).getTime();
+                startSpelTimer(startDatum);
             }
             
             document.getElementById('locatie-naam').textContent = data.locatieNaam;

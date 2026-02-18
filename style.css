@@ -578,3 +578,25 @@ input[type="file"] {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* Spel timer */
+.spel-timer {
+    text-align: center;
+    font-size: 2.5em;
+    font-weight: 900;
+    color: var(--widm-accent);
+    text-shadow: 0 0 20px rgba(139, 195, 74, 0.5);
+    margin-bottom: 20px;
+    letter-spacing: 3px;
+}
+
+.spel-timer.urgent {
+    color: var(--danger);
+    text-shadow: 0 0 20px rgba(198, 40, 40, 0.5);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
