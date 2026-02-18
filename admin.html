@@ -235,18 +235,24 @@
             border-top: 1px solid var(--light-grey);
         }
 
-        .foto-preview {
+        .bekijk-foto-btn {
             width: 100%;
+            background: linear-gradient(135deg, #4a4a4a, #2a2a2a);
+            color: var(--widm-accent);
+            border: 2px solid var(--widm-green);
+            padding: 14px;
             border-radius: 10px;
-            margin-bottom: 12px;
-            max-height: 200px;
-            object-fit: cover;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.2s;
+            font-size: 1em;
+            margin-bottom: 12px;
         }
 
-        .foto-preview:hover {
-            transform: scale(1.02);
+        .bekijk-foto-btn:hover {
+            background: linear-gradient(135deg, #5a5a5a, #3a3a3a);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 195, 74, 0.3);
         }
 
         .actie-knoppen {
@@ -482,7 +488,6 @@
         let spelGestart = false;
         let popupCallback = null;
 
-        // ===== POPUP =====
         function toonPopup(tekst, metAnnuleer = false, callback = null) {
             popupCallback = callback;
             document.getElementById('popup-tekst').textContent = tekst;
@@ -501,7 +506,6 @@
             if (popupCallback) { popupCallback(false); popupCallback = null; }
         }
 
-        // ===== API =====
         async function apiCall(action, params = {}, method = 'GET') {
             try {
                 const url = new URL(API_URL);
@@ -524,7 +528,6 @@
             }
         }
 
-        // ===== TIMER =====
         function startTimer(startDatum) {
             if (timerInterval) clearInterval(timerInterval);
             
@@ -566,7 +569,6 @@
             container.insertBefore(afgelopenDiv, container.firstChild);
         }
 
-        // ===== START SPEL =====
         function bevestigStart() {
             toonPopup('Weet je zeker dat je het spel wilt starten? De timer van 2 uur begint dan te lopen!', true, async (bevestigd) => {
                 if (bevestigd) {
@@ -595,7 +597,6 @@
             }
         }
 
-        // ===== GOEDKEUREN / AFKEUREN =====
         async function keurGoed(teamcode) {
             const result = await apiCall('keurGoed', { teamcode }, 'POST');
             if (result && result.success) {
@@ -618,7 +619,6 @@
             });
         }
 
-        // ===== DASHBOARD LADEN =====
         function getStatusBadge(status) {
             switch(status) {
                 case 'Rollen_Verdelen': return '<span class="status-badge status-rollen">Rollen verdelen</span>';
@@ -640,7 +640,6 @@
                 return;
             }
 
-            // Update spel status
             if (data.spelGestart && !spelGestart) {
                 spelGestart = true;
                 startTijd = new Date(data.startTijd).getTime();
@@ -648,7 +647,6 @@
                 startTimer(startTijd);
             }
 
-            // Bouw teams HTML
             let teamsHTML = '<div class="teams-grid">';
 
             data.teams.forEach(team => {
@@ -666,10 +664,9 @@
                 if (heeftFoto) {
                     fotoHTML = `
                         <div class="foto-sectie">
-                            <img src="${team.fotoUrl}" class="foto-preview" 
-                                onclick="window.open('${team.fotoUrl}', '_blank')"
-                                onerror="this.style.display='none'"
-                                alt="Bewijs foto">
+                            <button class="bekijk-foto-btn" onclick="window.open('${team.fotoUrl}', '_blank')">
+                                📸 Bekijk foto
+                            </button>
                             ${wachtOpGoedkeuring ? `
                                 <div class="actie-knoppen">
                                     <button class="goedkeur-btn" onclick="keurGoed('${team.teamcode}')">✅ Goedkeuren</button>
@@ -681,7 +678,7 @@
                 } else if (wachtOpGoedkeuring) {
                     fotoHTML = `
                         <div class="foto-sectie">
-                            <div class="geen-foto">📎 Bewijs ontvangen (geen preview beschikbaar)</div>
+                            <div class="geen-foto">Geen bewijs ontvangen</div>
                             <div class="actie-knoppen">
                                 <button class="goedkeur-btn" onclick="keurGoed('${team.teamcode}')">✅ Goedkeuren</button>
                                 <button class="afkeur-btn" onclick="keurAf('${team.teamcode}')">❌ Afkeuren</button>
@@ -719,7 +716,6 @@
             document.getElementById('teams-container').innerHTML = teamsHTML;
         }
 
-        // ===== INITIALISATIE =====
         window.onload = function() {
             laadDashboard();
             setInterval(laadDashboard, 10000);
