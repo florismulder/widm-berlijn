@@ -600,3 +600,15 @@ input[type="file"] {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
 }
+
+/* Centreer spel scherm elementen */
+#spel-scherm .status-badge {
+    display: block;
+    text-align: center;
+    margin: 0 auto 10px auto;
+    width: fit-content;
+}
+
+#spel-scherm h2 {
+    text-align: center;
+}
