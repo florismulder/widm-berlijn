@@ -585,3 +585,45 @@ input[type="file"] {
     border: 3px solid var(--widm-accent);
     box-shadow: 0 0 20px rgba(139, 195, 74, 0.5);
 }
+
+/* ===== ALLES IN WIDM LETTERTYPE ===== */
+
+/* Share Tech Mono voor ALLES */
+body,
+* {
+    font-family: 'Share Tech Mono', 'Courier New', monospace !important;
+    letter-spacing: 1px;
+}
+
+/* Grote elementen extra letter-spacing */
+h1, h2, h3,
+.timer-display,
+.spel-timer,
+#locatie-naam,
+#countdown,
+.rol-mol,
+.rol-kandidaat,
+.captain-reveal {
+    letter-spacing: 3px;
+}
+
+/* Uppercase voor headers en UI */
+h1, h2, h3,
+button,
+.file-label,
+.status-badge,
+.timer-display,
+.spel-timer,
+.rol-mol,
+.rol-kandidaat {
+    text-transform: uppercase !important;
+}
+
+/* Normale teksten geen uppercase */
+.instructie,
+.subtitle,
+.opdracht-box p,
+.hint-text,
+p {
+    text-transform: none !important;
+}
