@@ -1,9 +1,7 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* Import WIDM-stijl lettertype - OCR A Extended alternatief */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
+/* ===== VARIABELEN ===== */
 :root {
     --widm-green: #2D5016;
     --widm-dark-green: #1a3009;
@@ -13,508 +11,448 @@
     --grey: #2a2a2a;
     --light-grey: #3a3a3a;
     --text-light: #e0e0e0;
-    --danger: #c62828;
-    --success: #388e3c;
+}
+
+/* ===== RESET & BODY ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(180deg, #000000 0%, #0a0a0a 100%);
+    color: var(--text-light);
     min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     padding: 20px;
 }
 
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 20% 50%, rgba(45, 80, 22, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 50%, rgba(45, 80, 22, 0.2) 0%, transparent 50%);
-    z-index: 0;
+/* ===== WIDM LETTERTYPE HIERARCHY ===== */
+h1, h2, h3, 
+.timer-display, 
+.spel-timer, 
+#locatie-naam, 
+#countdown, 
+.rol-mol, 
+.rol-kandidaat, 
+.captain-reveal,
+.status-badge,
+.team-code {
+    font-family: 'Share Tech Mono', 'Courier New', monospace !important;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
+/* Timer extra stoer */
+.timer-display, .spel-timer {
+    font-weight: 700;
+    letter-spacing: 4px;
+}
+
+/* ===== CONTAINER ===== */
 .container {
-    background: linear-gradient(135deg, var(--grey) 0%, var(--dark) 100%);
-    border-radius: 24px;
-    box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.8),
-        0 0 0 2px var(--widm-green);
     max-width: 500px;
-    width: 100%;
-    padding: 40px;
-    animation: slideIn 0.5s ease;
-    position: relative;
-    z-index: 1;
+    margin: 0 auto;
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
+/* ===== HEADER ===== */
 header {
     text-align: center;
-    margin-bottom: 30px;
-    position: relative;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, var(--widm-dark-green), var(--grey));
+    border-radius: 16px;
+    margin-bottom: 25px;
+    border: 1px solid var(--widm-green);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
-header::before {
-    content: '';
-    position: absolute;
-    top: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 80px;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%232D5016"/><path d="M30,50 Q50,30 70,50 Q50,70 30,50" fill="%238bc34a" opacity="0.3"/></svg>');
-    background-size: contain;
-    opacity: 0.3;
-}
-
-h1 {
-    font-size: 2.5em;
+header h1 {
     color: var(--widm-accent);
+    font-size: 2em;
     margin-bottom: 5px;
-    text-shadow: 
-        2px 2px 4px rgba(0, 0, 0, 0.8),
-        0 0 20px rgba(139, 195, 74, 0.3);
-    font-weight: 900;
-    letter-spacing: -1px;
+    text-shadow: 0 0 20px rgba(139, 195, 74, 0.5);
 }
 
 .subtitle {
     color: var(--text-light);
-    font-size: 1.1em;
-    font-weight: 300;
-    opacity: 0.8;
+    opacity: 0.7;
+    font-size: 0.9em;
 }
 
-h2 {
-    color: var(--widm-accent);
-    margin-bottom: 20px;
-    font-size: 1.8em;
-    font-weight: 700;
-}
-
-h3 {
-    color: var(--text-light);
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-
+/* ===== SCHERMEN ===== */
 .scherm {
-    animation: fadeIn 0.4s ease;
+    background: linear-gradient(135deg, var(--grey), var(--dark));
+    border: 1px solid var(--widm-green);
+    border-radius: 16px;
+    padding: 30px 25px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.scherm.hidden {
+    display: none;
 }
 
-.hidden {
-    display: none !important;
+.scherm h2 {
+    color: var(--widm-accent);
+    font-size: 1.8em;
+    margin-bottom: 15px;
+    text-align: center;
 }
 
 .instructie {
+    text-align: center;
     color: var(--text-light);
     margin-bottom: 25px;
     line-height: 1.6;
-    opacity: 0.8;
+    opacity: 0.9;
 }
 
+/* ===== INPUTS & BUTTONS ===== */
 input[type="text"] {
     width: 100%;
-    padding: 16px;
-    border: 2px solid var(--light-grey);
+    padding: 15px;
+    background: var(--light-grey);
+    border: 2px solid var(--widm-green);
     border-radius: 12px;
-    font-size: 16px;
-    margin-bottom: 15px;
-    transition: all 0.3s;
-    background: var(--dark);
     color: var(--text-light);
+    font-size: 1.1em;
+    margin-bottom: 20px;
+    transition: all 0.3s;
 }
 
 input[type="text"]:focus {
     outline: none;
-    border-color: var(--widm-green);
-    box-shadow: 0 0 0 3px rgba(45, 80, 22, 0.2);
-}
-
-input[type="text"]::placeholder {
-    color: #666;
+    border-color: var(--widm-accent);
+    box-shadow: 0 0 20px rgba(139, 195, 74, 0.3);
 }
 
 button {
     width: 100%;
     padding: 16px;
-    background: linear-gradient(135deg, var(--widm-green) 0%, var(--widm-dark-green) 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--widm-accent), var(--widm-light-green));
+    color: #000;
     border: none;
     border-radius: 12px;
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 1.1em;
+    font-weight: 900;
     cursor: pointer;
     transition: all 0.3s;
-    margin-top: 10px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    box-shadow: 0 5px 20px rgba(139, 195, 74, 0.3);
 }
 
 button:hover {
-    background: linear-gradient(135deg, var(--widm-light-green) 0%, var(--widm-green) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(45, 80, 22, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(139, 195, 74, 0.5);
 }
 
-button:active {
-    transform: translateY(0);
-}
-
-button.member-btn {
+button:disabled {
     background: var(--light-grey);
-    color: var(--text-light);
-    margin-bottom: 10px;
-    text-transform: none;
-    letter-spacing: 0;
+    color: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
-button.member-btn:hover {
-    background: var(--grey);
-    box-shadow: 0 5px 20px rgba(255, 255, 255, 0.1);
+.member-btn {
+    margin-bottom: 12px;
 }
 
+/* ===== ROLLEN VERDELEN ===== */
+#leden-lijst, #captain-lijst {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ===== PRIVACY COUNTDOWN ===== */
 #countdown {
-    font-size: 120px;
+    font-size: 8em;
     font-weight: 900;
     color: var(--widm-accent);
     text-align: center;
     margin: 40px 0;
+    text-shadow: 0 0 40px rgba(139, 195, 74, 0.8);
     animation: pulse 1s infinite;
-    text-shadow: 0 0 30px rgba(139, 195, 74, 0.5);
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.1); opacity: 0.8; }
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
 }
 
-#rol-content {
-    text-align: center;
-    padding: 30px;
-}
-
+/* ===== ROL ONTHULLING ===== */
 .rol-mol {
-    background: linear-gradient(135deg, var(--danger) 0%, #8b0000 100%);
-    color: white;
-    padding: 40px;
+    background: linear-gradient(135deg, #8b0000, #450000);
+    color: #ff6b6b;
+    padding: 40px 20px;
     border-radius: 16px;
-    margin: 20px 0;
-    font-size: 2.5em;
+    text-align: center;
+    font-size: 3em;
     font-weight: 900;
-    text-transform: uppercase;
-    animation: shake 0.5s;
-    box-shadow: 
-        0 10px 30px rgba(198, 40, 40, 0.5),
-        inset 0 0 50px rgba(0, 0, 0, 0.3);
-    letter-spacing: 3px;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0) rotate(0deg); }
-    25% { transform: translateX(-10px) rotate(-2deg); }
-    75% { transform: translateX(10px) rotate(2deg); }
+    margin: 30px 0;
+    border: 3px solid #ff6b6b;
+    box-shadow: 0 0 40px rgba(255, 107, 107, 0.5);
+    animation: molReveal 0.5s ease-out;
 }
 
 .rol-kandidaat {
-    background: linear-gradient(135deg, var(--widm-green) 0%, var(--widm-dark-green) 100%);
-    color: white;
-    padding: 40px;
+    background: linear-gradient(135deg, var(--widm-dark-green), var(--widm-green));
+    color: var(--widm-accent);
+    padding: 40px 20px;
     border-radius: 16px;
-    margin: 20px 0;
+    text-align: center;
+    font-size: 3em;
+    font-weight: 900;
+    margin: 30px 0;
+    border: 3px solid var(--widm-accent);
+    box-shadow: 0 0 40px rgba(139, 195, 74, 0.5);
+    animation: kandidaatReveal 0.5s ease-out;
+}
+
+@keyframes molReveal {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes kandidaatReveal {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ===== CAPTAIN ONTHULLING ===== */
+.captain-reveal {
+    font-size: 3em;
+    font-weight: 900;
+    color: var(--widm-accent);
+    text-align: center;
+    margin: 30px 0;
+    text-shadow: 0 0 30px rgba(139, 195, 74, 0.8);
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    0% {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ===== QR CODE ===== */
+#qr-code {
+    display: flex;
+    justify-content: center;
+    margin: 25px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== SPEL SCHERM ===== */
+.spel-timer {
+    text-align: center;
     font-size: 2.5em;
     font-weight: 900;
-    text-transform: uppercase;
-    box-shadow: 
-        0 10px 30px rgba(45, 80, 22, 0.5),
-        inset 0 0 50px rgba(0, 0, 0, 0.3);
+    color: var(--widm-accent);
+    text-shadow: 0 0 20px rgba(139, 195, 74, 0.5);
+    margin-bottom: 20px;
     letter-spacing: 3px;
 }
 
+.spel-timer.urgent {
+    color: #ff6b6b;
+    text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+    animation: pulse 1s infinite;
+}
+
 .status-badge {
-    display: inline-block;
-    background: var(--widm-green);
-    color: white;
+    text-align: center !important;
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: fit-content !important;
+    background: var(--widm-dark-green);
+    color: var(--widm-accent);
     padding: 8px 20px;
     border-radius: 20px;
     font-size: 0.85em;
     font-weight: 700;
-    margin-bottom: 15px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    box-shadow: 0 4px 10px rgba(45, 80, 22, 0.3);
+    margin-bottom: 10px;
+    border: 1px solid var(--widm-green);
 }
 
 #locatie-naam {
+    text-align: center !important;
+    font-size: 2em;
     color: var(--widm-accent);
     margin-bottom: 25px;
-    text-shadow: 0 2px 10px rgba(139, 195, 74, 0.3);
+    text-shadow: 0 0 15px rgba(139, 195, 74, 0.4);
 }
 
 .opdracht-box {
-    background: linear-gradient(135deg, var(--light-grey) 0%, var(--grey) 100%);
-    padding: 25px;
-    border-radius: 16px;
-    margin: 25px 0;
-    border-left: 5px solid var(--widm-green);
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+    background: var(--light-grey);
+    border: 1px solid var(--widm-green);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
 }
 
 .opdracht-box h3 {
     color: var(--widm-accent);
-    margin-bottom: 15px;
+    margin-bottom: 12px;
+    font-size: 1.1em;
 }
 
 .opdracht-box p {
     color: var(--text-light);
     line-height: 1.6;
-    margin-top: 10px;
+}
+
+/* ===== FILE UPLOAD ===== */
+.file-label {
+    display: block;
+    text-align: center;
+    padding: 20px;
+    background: var(--light-grey);
+    border: 2px dashed var(--widm-green);
+    border-radius: 12px;
+    color: var(--widm-accent);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 15px;
+}
+
+.file-label:hover {
+    background: var(--widm-dark-green);
+    border-color: var(--widm-accent);
 }
 
 input[type="file"] {
     display: none;
 }
 
-.file-label {
-    display: block;
-    width: 100%;
-    padding: 16px;
-    background: var(--light-grey);
-    color: var(--text-light);
-    border-radius: 12px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-weight: 600;
-    margin-bottom: 10px;
-    border: 2px solid var(--grey);
-}
-
-.file-label:hover {
-    background: var(--grey);
-    border-color: var(--widm-green);
-    transform: translateY(-2px);
-}
-
 #bestandsnaam {
+    text-align: center;
     color: var(--widm-accent);
     font-size: 0.9em;
-    margin: 10px 0;
+    margin-bottom: 15px;
+    min-height: 20px;
+}
+
+/* ===== VOORTGANG BALK ===== */
+#voortgang-balk-container {
+    background: var(--dark);
+    border-radius: 10px;
+    height: 30px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    border: 1px solid var(--widm-green);
+}
+
+#voortgang-balk {
+    height: 100%;
+    background: linear-gradient(90deg, var(--widm-green), var(--widm-accent));
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+#voortgang-tekst {
     text-align: center;
+    color: var(--widm-accent);
+    font-weight: 700;
+    margin-top: 8px;
 }
 
-#upload-btn {
-    background: linear-gradient(135deg, var(--widm-light-green) 0%, var(--widm-green) 100%);
-    margin-top: 20px;
-}
-
-#upload-btn:hover {
-    background: linear-gradient(135deg, var(--widm-accent) 0%, var(--widm-light-green) 100%);
-}
-
-#upload-btn:disabled {
-    background: var(--light-grey);
-    cursor: not-allowed;
-    opacity: 0.5;
-}
-
+/* ===== WACHT SECTIE ===== */
 .wacht-box {
-    background: linear-gradient(135deg, #3a2f0b 0%, #2a2008 100%);
-    border: 2px solid #8b7329;
+    background: linear-gradient(135deg, #3a2f0b, #2a1f00);
+    border: 2px solid #f0e68c;
+    border-radius: 12px;
     padding: 30px;
-    border-radius: 16px;
     text-align: center;
-    margin: 25px 0;
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .wacht-box p {
     color: #f0e68c;
-    font-size: 1.1em;
+    font-size: 1.2em;
+    font-weight: 700;
 }
 
+/* ===== HINT SECTIE ===== */
 .success-box {
-    background: linear-gradient(135deg, var(--widm-dark-green) 0%, #0d2604 100%);
+    background: linear-gradient(135deg, var(--widm-dark-green), var(--widm-green));
     border: 2px solid var(--widm-accent);
-    padding: 30px;
-    border-radius: 16px;
-    margin: 25px 0;
-    box-shadow: 
-        0 10px 30px rgba(139, 195, 74, 0.2),
-        inset 0 2px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 25px;
+    text-align: center;
 }
 
 .success-box h3 {
     color: var(--widm-accent);
     font-size: 1.5em;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .hint-label {
     color: var(--text-light);
-    font-weight: 600;
-    margin-bottom: 15px;
+    font-size: 0.9em;
+    margin-bottom: 10px;
     opacity: 0.8;
 }
 
 .hint-text {
-    background: rgba(0, 0, 0, 0.4);
-    padding: 20px;
-    border-radius: 12px;
-    font-style: italic;
     color: var(--widm-accent);
+    font-size: 1.3em;
+    font-weight: 700;
+    margin-bottom: 20px;
     line-height: 1.6;
-    margin: 15px 0;
-    border-left: 4px solid var(--widm-accent);
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .success-btn {
-    background: linear-gradient(135deg, var(--widm-accent) 0%, var(--widm-light-green) 100%);
-    margin-top: 20px;
+    background: linear-gradient(135deg, var(--widm-accent), var(--widm-light-green));
 }
 
-.success-btn:hover {
-    background: linear-gradient(135deg, #a5d76a 0%, var(--widm-accent) 100%);
-}
-
-@media (max-width: 600px) {
-    .container {
-        padding: 25px;
-    }
-    
-    h1 {
-        font-size: 2em;
-    }
-    
-    #countdown {
-        font-size: 80px;
-    }
-    
-    .rol-mol, .rol-kandidaat {
-        font-size: 2em;
-        padding: 30px 20px;
-    }
-}
-
-/* Captain Reveal */
-.captain-reveal {
-    background: linear-gradient(135deg, var(--widm-green) 0%, var(--widm-dark-green) 100%);
-    color: var(--widm-accent);
-    padding: 30px;
-    border-radius: 16px;
-    margin: 20px 0;
-    font-size: 2em;
-    font-weight: 900;
-    text-align: center;
-    text-transform: uppercase;
-    box-shadow: 0 10px 30px rgba(45, 80, 22, 0.5);
-    letter-spacing: 2px;
-    animation: slideIn 0.5s ease;
-}
-
-/* QR Code */
-#qr-code {
-    display: flex;
-    justify-content: center;
-    margin: 20px 0;
-    padding: 20px;
-    background: white;
-    border-radius: 16px;
-}
-
-/* Waarschuwing */
-.waarschuwing {
-    background: #3a2f0b;
-    border: 2px solid #8b7329;
-    color: #f0e68c;
-    padding: 15px;
-    border-radius: 12px;
-    margin: 15px 0;
-    text-align: center;
-}
-
-/* Voortgangsbalk */
-#voortgang-balk-container {
-    background: var(--light-grey);
-    border-radius: 10px;
-    height: 30px;
-    margin: 15px 0;
-    overflow: hidden;
-    position: relative;
-}
-
-#voortgang-balk {
-    background: linear-gradient(90deg, var(--widm-green), var(--widm-accent));
-    height: 100%;
-    width: 0%;
-    transition: width 0.3s ease;
-    border-radius: 10px;
-}
-
-#voortgang-tekst {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-weight: 700;
-    font-size: 0.9em;
-}
-
-/* Captain onthulling tekst fix */
-.instructie-box {
-    background: var(--light-grey);
-    padding: 20px;
-    border-radius: 16px;
-    margin: 20px 0;
-    border-left: 5px solid var(--widm-accent);
-}
-
-.instructie-box p {
-    color: var(--text-light) !important;
-    line-height: 1.7;
-}
-
-.instructie-box strong {
-    color: var(--widm-accent) !important;
-}
-
-/* Eigen Popup */
+/* ===== POPUP ===== */
 .popup-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
     padding: 20px;
+}
+
+.popup-overlay.hidden {
+    display: none;
 }
 
 .popup-box {
@@ -529,7 +467,7 @@ input[type="file"] {
 }
 
 .popup-header {
-    background: linear-gradient(135deg, var(--widm-green) 0%, var(--widm-dark-green) 100%);
+    background: linear-gradient(135deg, var(--widm-green), var(--widm-dark-green));
     padding: 15px 20px;
     color: white;
     font-weight: 700;
@@ -563,7 +501,7 @@ input[type="file"] {
     color: var(--text-light) !important;
 }
 
-/* Laad spinner */
+/* ===== LAAD SPINNER ===== */
 .laad-spinner {
     width: 50px;
     height: 50px;
@@ -575,41 +513,43 @@ input[type="file"] {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
-/* Spel timer */
-.spel-timer {
-    text-align: center;
-    font-size: 2.5em;
-    font-weight: 900;
-    color: var(--widm-accent);
-    text-shadow: 0 0 20px rgba(139, 195, 74, 0.5);
-    margin-bottom: 20px;
-    letter-spacing: 3px;
+/* ===== UTILITY ===== */
+.hidden {
+    display: none;
 }
 
-.spel-timer.urgent {
-    color: var(--danger);
-    text-shadow: 0 0 20px rgba(198, 40, 40, 0.5);
-    animation: pulse 1s infinite;
-}
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 1.5em;
+    }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
+    .scherm h2 {
+        font-size: 1.4em;
+    }
 
-/* Centreer spel scherm elementen */
-.status-badge {
-    text-align: center !important;
-    display: block !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    width: fit-content !important;
-}
+    #countdown {
+        font-size: 6em;
+    }
 
-#locatie-naam {
-    text-align: center !important;
+    .rol-mol, .rol-kandidaat {
+        font-size: 2em;
+        padding: 30px 15px;
+    }
+
+    .captain-reveal {
+        font-size: 2em;
+    }
+
+    .spel-timer {
+        font-size: 2em;
+    }
 }
