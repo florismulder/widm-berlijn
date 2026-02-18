@@ -38,9 +38,21 @@ h1, h2, h3,
 .rol-kandidaat, 
 .captain-reveal,
 .status-badge,
-.team-code {
+.team-code,
+button,
+.file-label,
+.opdracht-box p {
     font-family: 'Share Tech Mono', 'Courier New', monospace !important;
     letter-spacing: 2px;
+}
+
+/* Uppercase alleen voor koppen en UI elementen */
+h1, h2, h3, 
+button,
+.file-label,
+.status-badge,
+.timer-display,
+.spel-timer {
     text-transform: uppercase;
 }
 
