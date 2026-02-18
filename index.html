@@ -291,26 +291,29 @@
             });
         }
 
-        function startPrivacyCheck(naam) {
-            huidigeLid = naam;
-            document.getElementById('privacy-naam').textContent = naam;
-            toonScherm('privacy-scherm');
-            
-            let count = 3;
-            document.getElementById('countdown').textContent = count;
-            speelPiep();
-            
-            const timer = setInterval(() => {
-                count--;
-                document.getElementById('countdown').textContent = count;
-                speelPiep();
-                
-                if (count === 0) {
-                    clearInterval(timer);
-                    toonRol();
-                }
-            }, 1000);
+            function startPrivacyCheck(naam) {
+    huidigeLid = naam;
+    document.getElementById('privacy-naam').textContent = naam;
+    toonScherm('privacy-scherm');
+    
+    let count = 3;
+    document.getElementById('countdown').textContent = count;
+    speelPiep();
+    
+    const timer = setInterval(() => {
+        count--;
+        document.getElementById('countdown').textContent = count;
+        speelPiep();
+        
+        if (count === 0) {
+            clearInterval(timer);
+            // Wacht 300ms en toon dan de rol
+            setTimeout(() => {
+                toonRol();
+            }, 300);
         }
+    }, 1000);
+}
 
         async function toonRol() {
             const data = await apiCall('onthulRol', {
