@@ -6,6 +6,55 @@
     <title>Wie is de Mol? - Berlijn</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* File upload styling - inline voor zekerheid */
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            background: #8bc34a;
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            margin: 20px 0;
+        }
+
+        .file-label:hover {
+            background: #9ccc65;
+            transform: scale(1.05);
+        }
+
+        #startlocatie-voortgang-container,
+        #voortgang-balk-container {
+            margin: 15px 0;
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 30px;
+        }
+
+        #startlocatie-voortgang-balk,
+        #voortgang-balk {
+            height: 100%;
+            background: linear-gradient(90deg, #2D5016, #8bc34a);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        #startlocatie-voortgang-tekst,
+        #voortgang-tekst {
+            text-align: center;
+            color: #8bc34a;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
 

@@ -285,21 +285,14 @@
 
         #teams-container {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
         }
 
-        /* 2 kolommen op tablets en groter */
-        @media (min-width: 768px) {
+        /* Op kleine schermen toch responsive maken */
+        @media (max-width: 768px) {
             #teams-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        /* 3 kolommen op grote schermen */
-        @media (min-width: 1400px) {
-            #teams-container {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: 1fr;
             }
         }
 
