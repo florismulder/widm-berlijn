@@ -3,516 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spelleider Dashboard - Wie is de Mol?</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --widm-green: #2D5016;
-            --widm-dark-green: #1a3009;
-            --widm-light-green: #4a7c2c;
-            --widm-accent: #8bc34a;
-            --dark: #0a0a0a;
-            --grey: #2a2a2a;
-            --light-grey: #3a3a3a;
-            --text-light: #e0e0e0;
-            --danger: #c62828;
-            --success: #388e3c;
-            --warning: #f39c12;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #000000;
-            color: var(--text-light);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            padding: 30px 20px;
-            background: linear-gradient(135deg, var(--widm-dark-green), var(--grey));
-            border-radius: 16px;
-            margin-bottom: 25px;
-            border: 1px solid var(--widm-green);
-        }
-
-        header h1 {
-            color: var(--widm-accent);
-            font-size: 2em;
-            margin-bottom: 5px;
-        }
-
-        header p {
-            color: var(--text-light);
-            opacity: 0.7;
-        }
-
-        .timer-sectie {
-            background: linear-gradient(135deg, var(--grey), var(--dark));
-            border: 2px solid var(--widm-green);
-            border-radius: 16px;
-            padding: 25px;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .timer-display {
-            font-size: 4em;
-            font-weight: 900;
-            color: var(--widm-accent);
-            text-shadow: 0 0 30px rgba(139, 195, 74, 0.5);
-            margin: 15px 0;
-            letter-spacing: 5px;
-        }
-
-        .timer-display.urgent {
-            color: var(--danger);
-            text-shadow: 0 0 30px rgba(198, 40, 40, 0.5);
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        .start-btn {
-            background: linear-gradient(135deg, var(--widm-accent), var(--widm-light-green));
-            color: #000;
-            border: none;
-            padding: 18px 50px;
-            border-radius: 12px;
-            font-size: 1.2em;
-            font-weight: 900;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .start-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(139, 195, 74, 0.4);
-        }
-
-        .start-btn:disabled {
-            background: var(--light-grey);
-            color: #666;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .spel-gestart-badge {
-            display: inline-block;
-            background: var(--success);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.9em;
-            margin-bottom: 15px;
-        }
-
-        .teams-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-
-        .team-kaart {
-            background: linear-gradient(135deg, var(--grey), var(--dark));
-            border: 1px solid var(--widm-green);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: transform 0.2s;
-        }
-
-        .team-kaart:hover {
-            transform: translateY(-3px);
-        }
-
-        .team-header {
-            background: linear-gradient(135deg, var(--widm-dark-green), var(--widm-green));
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .team-naam {
-            font-size: 1.3em;
-            font-weight: 900;
-            color: white;
-        }
-
-        .team-code {
-            font-size: 0.8em;
-            color: var(--widm-accent);
-            background: rgba(0,0,0,0.3);
-            padding: 4px 10px;
-            border-radius: 10px;
-        }
-
-        .team-body {
-            padding: 20px;
-        }
-
-        .team-info-rij {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--light-grey);
-        }
-
-        .team-info-rij:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .info-label {
-            color: var(--widm-accent);
-            font-size: 0.85em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            min-width: 80px;
-        }
-
-        .info-waarde {
-            color: var(--text-light);
-            font-size: 0.95em;
-            text-align: right;
-            flex: 1;
-            margin-left: 10px;
-        }
-
-        .leden-lijst {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            justify-content: flex-end;
-        }
-
-        .lid-badge {
-            background: var(--light-grey);
-            color: var(--text-light);
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 0.85em;
-        }
-
-        .lid-badge.captain {
-            background: var(--widm-green);
-            color: white;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 10px;
-            font-size: 0.8em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .status-rollen { background: #1a3a5c; color: #64b5f6; }
-        .status-wacht-upload { background: #3a2f0b; color: #f0e68c; }
-        .status-wacht-goed { background: #4a2000; color: #ffb74d; }
-        .status-goedgekeurd { background: #1a3a1a; color: #81c784; }
-        .status-onbekend { background: var(--light-grey); color: #aaa; }
-
-        .foto-sectie {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid var(--light-grey);
-        }
-
-        .bekijk-foto-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #4a4a4a, #2a2a2a);
-            color: var(--widm-accent);
-            border: 2px solid var(--widm-green);
-            padding: 14px;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1em;
-            margin-bottom: 12px;
-        }
-
-        .bekijk-foto-btn:hover {
-            background: linear-gradient(135deg, #5a5a5a, #3a3a3a);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(139, 195, 74, 0.3);
-        }
-
-        .actie-knoppen {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .goedkeur-btn {
-            background: linear-gradient(135deg, var(--success), #2e7d32);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.95em;
-        }
-
-        .goedkeur-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(56, 142, 60, 0.4);
-        }
-
-        .afkeur-btn {
-            background: linear-gradient(135deg, var(--danger), #b71c1c);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.95em;
-        }
-
-        .afkeur-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(198, 40, 40, 0.4);
-        }
-
-        .refresh-info {
-            text-align: center;
-            color: #666;
-            font-size: 0.85em;
-            margin-bottom: 20px;
-        }
-
-        .refresh-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: var(--widm-accent);
-            border-radius: 50%;
-            margin-right: 6px;
-            animation: blink 2s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.2; }
-        }
-
-        .popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-
-        .popup-overlay.hidden { display: none; }
-
-        .popup-box {
-            background: var(--grey);
-            border-radius: 16px;
-            max-width: 500px;
-            width: 100%;
-            overflow: hidden;
-            border: 1px solid var(--widm-green);
-        }
-
-        .popup-header {
-            background: linear-gradient(135deg, var(--widm-green), var(--widm-dark-green));
-            padding: 15px 20px;
-            color: white;
-            font-weight: 700;
-        }
-
-        .popup-body {
-            padding: 20px;
-        }
-
-        .popup-body p {
-            color: var(--text-light);
-            line-height: 1.6;
-        }
-
-        .popup-footer {
-            padding: 0 20px 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .popup-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 1em;
-            background: var(--widm-green);
-            color: white;
-            transition: all 0.2s;
-        }
-
-        .popup-btn:hover { background: var(--widm-light-green); }
-
-        .popup-annuleer {
-            background: var(--light-grey);
-            color: var(--text-light);
-        }
-
-        .popup-annuleer:hover { background: #4a4a4a; }
-
-        .geen-foto {
-            color: #666;
-            font-style: italic;
-            font-size: 0.9em;
-            text-align: center;
-            padding: 15px;
-            background: var(--dark);
-            border-radius: 10px;
-            margin-bottom: 12px;
-        }
-
-        .laad-container {
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .laad-spinner {
-            width: 60px;
-            height: 60px;
-            border: 6px solid var(--light-grey);
-            border-top: 6px solid var(--widm-accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .spel-afgelopen {
-            background: linear-gradient(135deg, #3a0a0a, #1a0000);
-            border: 2px solid var(--danger);
-            border-radius: 16px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .spel-afgelopen h2 {
-            color: var(--danger);
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        @media (max-width: 600px) {
-            .timer-display { font-size: 2.5em; }
-            .teams-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+    <title>Spelleider Dashboard - WIDM Berlijn</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="container">
+        <header>
+            <img src="widm-logo.jpg" alt="Wie is de Mol Logo" class="header-logo">
+            <h1>🕵️ Spelleider dashboard</h1>
+            <p class="subtitle">Wie is de Mol? - Berlijn</p>
+        </header>
 
-    <div id="popup-overlay" class="popup-overlay hidden">
+        <div class="dashboard-sectie">
+            <!-- Timer sectie -->
+            <div class="timer-sectie">
+                <div id="dashboard-timer" class="dashboard-timer">
+                    ⏱️ <span id="dashboard-timer-tekst">2:00:00</span>
+                </div>
+                <button id="start-spel-btn" onclick="bevestigStart()" class="start-btn">🚀 START HET SPEL</button>
+                <div id="spel-gestart-badge" class="status-badge" style="display:none; background: #8bc34a; margin-top: 10px;">
+                    ✅ Spel is gestart
+                </div>
+            </div>
+
+            <!-- Teams overzicht -->
+            <div id="teams-container"></div>
+        </div>
+    </div>
+
+    <!-- Bevestig popup -->
+    <div id="bevestig-overlay" class="popup-overlay hidden">
         <div class="popup-box">
-            <div class="popup-header">🕵️ Spelleider dashboard</div>
+            <div class="popup-header">
+                <span>🕵️ Spelleider Dashboard</span>
+            </div>
             <div class="popup-body">
-                <p id="popup-tekst"></p>
+                <p id="bevestig-tekst">Weet je zeker dat je het spel wilt starten?</p>
             </div>
             <div class="popup-footer">
-                <button class="popup-btn" onclick="sluitPopup()">OK</button>
-                <button id="popup-annuleer" class="popup-btn popup-annuleer hidden" onclick="annuleerPopup()">Annuleer</button>
+                <button onclick="startSpel()" style="background: #8bc34a;">✅ Ja, start!</button>
+                <button onclick="sluitBevestig()" style="background: #666; margin-left: 10px;">Annuleer</button>
             </div>
-        </div>
-    </div>
-
-    <header>
-        <h1>🕵️ Spelleider dashboard</h1>
-        <p>Wie is de Mol? - Berlijn Edition</p>
-    </header>
-
-    <div class="timer-sectie">
-        <div id="spel-gestart-badge" style="display:none;">
-            <span class="spel-gestart-badge">🟢 Spel is gestart</span>
-        </div>
-        <div class="timer-display" id="timer-display">2:00:00</div>
-        <button class="start-btn" id="start-btn" onclick="bevestigStart()">🚀 Start het spel!</button>
-        <p id="start-tijd-tekst" style="color: #666; font-size: 0.85em; margin-top: 10px;"></p>
-    </div>
-
-    <p class="refresh-info">
-        <span class="refresh-dot"></span>
-        Dashboard ververst automatisch elke 10 seconden
-    </p>
-
-    <div id="teams-container">
-        <div class="laad-container">
-            <div class="laad-spinner"></div>
-            <p style="color: #666;">Dashboard laden...</p>
         </div>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxtZUrnqR37X_HxUodU7U5AlYwrIhbtA8xgGDvlzqYReY86UrMcqIOvyJ1osRkTX-Alww/exec";
         const SPEL_DUUR = 2 * 60 * 60 * 1000;
-
+        let dashboardInterval = null;
         let timerInterval = null;
-        let startTijd = null;
-        let spelGestart = false;
-        let popupCallback = null;
-
-        function toonPopup(tekst, metAnnuleer = false, callback = null) {
-            popupCallback = callback;
-            document.getElementById('popup-tekst').textContent = tekst;
-            const annuleer = document.getElementById('popup-annuleer');
-            metAnnuleer ? annuleer.classList.remove('hidden') : annuleer.classList.add('hidden');
-            document.getElementById('popup-overlay').classList.remove('hidden');
-        }
-
-        function sluitPopup() {
-            document.getElementById('popup-overlay').classList.add('hidden');
-            if (popupCallback) { popupCallback(true); popupCallback = null; }
-        }
-
-        function annuleerPopup() {
-            document.getElementById('popup-overlay').classList.add('hidden');
-            if (popupCallback) { popupCallback(false); popupCallback = null; }
-        }
 
         async function apiCall(action, params = {}, method = 'GET') {
             try {
                 const url = new URL(API_URL);
                 url.searchParams.append('action', action);
-
+                
                 if (method === 'GET') {
-                    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+                    Object.keys(params).forEach(key => {
+                        url.searchParams.append(key, params[key]);
+                    });
                     const response = await fetch(url);
                     return await response.json();
                 } else {
@@ -528,21 +77,40 @@
             }
         }
 
-        function startTimer(startDatum) {
+        function bevestigStart() {
+            document.getElementById('bevestig-overlay').classList.remove('hidden');
+        }
+
+        function sluitBevestig() {
+            document.getElementById('bevestig-overlay').classList.add('hidden');
+        }
+
+        async function startSpel() {
+            sluitBevestig();
+            const result = await apiCall('startSpel', {}, 'POST');
+            if (result && result.success) {
+                alert('✅ Spel is gestart! Alle teams kunnen nu beginnen.');
+                updateDashboard();
+            } else {
+                alert('❌ Fout bij starten van spel. Probeer opnieuw.');
+            }
+        }
+
+        function startDashboardTimer(startDatum) {
             if (timerInterval) clearInterval(timerInterval);
+            
+            const timerEl = document.getElementById('dashboard-timer');
+            const timerTekstEl = document.getElementById('dashboard-timer-tekst');
             
             timerInterval = setInterval(() => {
                 const nu = new Date().getTime();
                 const verstreken = nu - startDatum;
                 const resterend = SPEL_DUUR - verstreken;
 
-                const timerEl = document.getElementById('timer-display');
-
                 if (resterend <= 0) {
                     clearInterval(timerInterval);
-                    timerEl.textContent = '0:00:00';
+                    timerTekstEl.textContent = 'Spel afgelopen!';
                     timerEl.classList.add('urgent');
-                    toonSpelAfgelopen();
                     return;
                 }
 
@@ -550,7 +118,7 @@
                 const minuten = Math.floor((resterend % (1000 * 60 * 60)) / (1000 * 60));
                 const seconden = Math.floor((resterend % (1000 * 60)) / 1000);
 
-                timerEl.textContent = `${uren}:${String(minuten).padStart(2, '0')}:${String(seconden).padStart(2, '0')}`;
+                timerTekstEl.textContent = `${uren}:${String(minuten).padStart(2, '0')}:${String(seconden).padStart(2, '0')}`;
 
                 if (resterend < 15 * 60 * 1000) {
                     timerEl.classList.add('urgent');
@@ -558,168 +126,359 @@
             }, 1000);
         }
 
-        function toonSpelAfgelopen() {
-            const container = document.getElementById('teams-container');
-            const afgelopenDiv = document.createElement('div');
-            afgelopenDiv.className = 'spel-afgelopen';
-            afgelopenDiv.innerHTML = `
-                <h2>⏰ Spel afgelopen!</h2>
-                <p style="color: var(--text-light);">De speeltijd van 2 uur is verstreken.</p>
-            `;
-            container.insertBefore(afgelopenDiv, container.firstChild);
-        }
+        async function updateDashboard() {
+            const data = await apiCall('getDashboard');
+            
+            if (!data || data.error) {
+                console.error('Fout bij ophalen dashboard:', data?.error);
+                return;
+            }
 
-        function bevestigStart() {
-            toonPopup('Weet je zeker dat je het spel wilt starten? De timer van 2 uur begint dan te lopen!', true, async (bevestigd) => {
-                if (bevestigd) {
-                    const result = await apiCall('startSpel', {}, 'POST');
-                    if (result && result.success) {
-                        spelGestart = true;
-                        startTijd = new Date(result.startTijd).getTime();
-                        updateStartUI();
-                        startTimer(startTijd);
-                        laadDashboard();
-                    } else {
-                        toonPopup('Fout bij starten van het spel. Probeer opnieuw.');
-                    }
+            // Update timer en spel status
+            if (data.spelGestart) {
+                document.getElementById('spel-gestart-badge').style.display = 'block';
+                document.getElementById('start-spel-btn').style.display = 'none';
+                
+                if (data.startTijd && !timerInterval) {
+                    const startDatum = new Date(data.startTijd).getTime();
+                    startDashboardTimer(startDatum);
                 }
+            } else {
+                document.getElementById('spel-gestart-badge').style.display = 'none';
+                document.getElementById('start-spel-btn').style.display = 'block';
+            }
+
+            // Render teams
+            const container = document.getElementById('teams-container');
+            container.innerHTML = '';
+
+            data.teams.forEach(team => {
+                const teamCard = document.createElement('div');
+                teamCard.className = 'team-card';
+                
+                // Status badge kleur
+                let statusClass = 'status-info';
+                let statusTekst = team.status;
+                
+                if (team.status === 'Wachten_op_Startlocatie_Goedkeuring') {
+                    statusClass = 'status-warning';
+                    statusTekst = '📍 Wacht op startlocatie bewijs';
+                } else if (team.status === 'Startlocatie_Goedgekeurd') {
+                    statusClass = 'status-success';
+                    statusTekst = '✅ Startlocatie goedgekeurd';
+                } else if (team.status === 'Wachten_op_Upload') {
+                    statusClass = 'status-info';
+                    statusTekst = '⏳ Wacht op foto upload';
+                } else if (team.status === 'Wachten_op_Goedkeuring') {
+                    statusClass = 'status-warning';
+                    statusTekst = '📸 Wacht op goedkeuring';
+                } else if (team.status === 'Goedgekeurd') {
+                    statusClass = 'status-success';
+                    statusTekst = '✅ Goedgekeurd';
+                }
+
+                // Leden badges
+                const ledenHTML = team.leden.map(lid => {
+                    const isCaptain = lid === team.captainNaam;
+                    return `<span class="lid-badge ${isCaptain ? 'captain-badge' : ''}">${isCaptain ? '🎖️ ' : ''}${lid}</span>`;
+                }).join('');
+
+                // Foto sectie
+                let fotoSectie = '';
+                
+                if (team.status === 'Wachten_op_Startlocatie_Goedkeuring' && team.startlocatieFotoUrl) {
+                    // Startlocatie foto goedkeuring
+                    fotoSectie = `
+                        <div class="foto-sectie">
+                            <a href="${team.startlocatieFotoUrl}" target="_blank" class="foto-link">📍 Bekijk startlocatie foto</a>
+                            <div class="actie-knoppen">
+                                <button onclick="keurStartlocatieGoed('${team.teamcode}')" class="btn-goedkeuren">✅ Goedkeuren</button>
+                                <button onclick="keurStartlocatieAf('${team.teamcode}')" class="btn-afkeuren">❌ Afkeuren</button>
+                            </div>
+                        </div>
+                    `;
+                } else if (team.status === 'Wachten_op_Goedkeuring' && team.fotoUrl) {
+                    // Normale opdracht foto goedkeuring
+                    fotoSectie = `
+                        <div class="foto-sectie">
+                            <a href="${team.fotoUrl}" target="_blank" class="foto-link">📸 Bekijk foto</a>
+                            <div class="actie-knoppen">
+                                <button onclick="keurGoed('${team.teamcode}')" class="btn-goedkeuren">✅ Goedkeuren</button>
+                                <button onclick="keurAf('${team.teamcode}')" class="btn-afkeuren">❌ Afkeuren</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                teamCard.innerHTML = `
+                    <div class="team-header">
+                        <h3>${team.teamnaam}</h3>
+                        <span class="team-code">${team.teamcode}</span>
+                    </div>
+                    <div class="team-info">
+                        <div class="leden-sectie">
+                            ${ledenHTML}
+                        </div>
+                        <div class="locatie-info">
+                            <strong>📍 Locatie:</strong> ${team.huidigeLocatie || 'Nog niet gestart'}
+                        </div>
+                        <div class="status-sectie">
+                            <span class="status-badge ${statusClass}">${statusTekst}</span>
+                        </div>
+                    </div>
+                    ${fotoSectie}
+                `;
+
+                container.appendChild(teamCard);
             });
         }
 
-        function updateStartUI() {
-            document.getElementById('start-btn').disabled = true;
-            document.getElementById('start-btn').textContent = '✅ Spel is gestart';
-            document.getElementById('spel-gestart-badge').style.display = 'block';
-            if (startTijd) {
-                const datum = new Date(startTijd);
-                document.getElementById('start-tijd-tekst').textContent = 
-                    `Gestart om ${datum.getHours()}:${String(datum.getMinutes()).padStart(2, '0')}`;
+        async function keurStartlocatieGoed(teamcode) {
+            const result = await apiCall('keurStartlocatieGoed', { teamcode }, 'POST');
+            if (result && result.success) {
+                updateDashboard();
+            } else {
+                alert('Fout bij goedkeuren. Probeer opnieuw.');
+            }
+        }
+
+        async function keurStartlocatieAf(teamcode) {
+            const result = await apiCall('keurStartlocatieAf', { teamcode }, 'POST');
+            if (result && result.success) {
+                alert('❌ Foto afgekeurd. Team moet opnieuw een foto uploaden.');
+                updateDashboard();
+            } else {
+                alert('Fout bij afkeuren. Probeer opnieuw.');
             }
         }
 
         async function keurGoed(teamcode) {
             const result = await apiCall('keurGoed', { teamcode }, 'POST');
             if (result && result.success) {
-                laadDashboard();
+                updateDashboard();
             } else {
-                toonPopup('Fout bij goedkeuren. Probeer opnieuw.');
+                alert('Fout bij goedkeuren. Probeer opnieuw.');
             }
         }
 
         async function keurAf(teamcode) {
-            toonPopup('Weet je zeker dat je dit bewijs wilt afkeuren? Het team moet dan opnieuw een foto sturen.', true, async (bevestigd) => {
-                if (bevestigd) {
-                    const result = await apiCall('keurAf', { teamcode }, 'POST');
-                    if (result && result.success) {
-                        laadDashboard();
-                    } else {
-                        toonPopup('Fout bij afkeuren. Probeer opnieuw.');
-                    }
-                }
-            });
-        }
-
-        function getStatusBadge(status) {
-            switch(status) {
-                case 'Rollen_Verdelen': return '<span class="status-badge status-rollen">Rollen verdelen</span>';
-                case 'Wachten_op_Upload': return '<span class="status-badge status-wacht-upload">Wacht op foto</span>';
-                case 'Wachten op goedkeuring':
-                case 'Wachten_op_Goedkeuring': return '<span class="status-badge status-wacht-goed">Wacht op goedkeuring</span>';
-                case 'Goedgekeurd': return '<span class="status-badge status-goedgekeurd">✅ Goedgekeurd</span>';
-                default: return '<span class="status-badge status-onbekend">Onbekend</span>';
+            const result = await apiCall('keurAf', { teamcode }, 'POST');
+            if (result && result.success) {
+                alert('❌ Foto afgekeurd. Team moet opnieuw een foto uploaden.');
+                updateDashboard();
+            } else {
+                alert('Fout bij afkeuren. Probeer opnieuw.');
             }
         }
 
-        async function laadDashboard() {
-            const data = await apiCall('getDashboard');
-
-            if (!data || data.error) {
-                document.getElementById('teams-container').innerHTML = `
-                    <p style="text-align:center; color: #666;">Fout bij laden dashboard. Probeer te verversen.</p>
-                `;
-                return;
-            }
-
-            if (data.spelGestart && !spelGestart) {
-                spelGestart = true;
-                startTijd = new Date(data.startTijd).getTime();
-                updateStartUI();
-                startTimer(startTijd);
-            }
-
-            let teamsHTML = '<div class="teams-grid">';
-
-            data.teams.forEach(team => {
-                const heeftFoto = team.fotoUrl && team.fotoUrl !== '';
-                const wachtOpGoedkeuring = team.status === 'Wachten op goedkeuring' || team.status === 'Wachten_op_Goedkeuring';
-
-                let ledenHTML = '<div class="leden-lijst">';
-                team.leden.forEach(lid => {
-                    const isCaptain = lid === team.captainNaam;
-                    ledenHTML += `<span class="lid-badge ${isCaptain ? 'captain' : ''}">${lid}${isCaptain ? ' 🎖️' : ''}</span>`;
-                });
-                ledenHTML += '</div>';
-
-                let fotoHTML = '';
-                if (heeftFoto) {
-                    fotoHTML = `
-                        <div class="foto-sectie">
-                            <button class="bekijk-foto-btn" onclick="window.open('${team.fotoUrl}', '_blank')">
-                                📸 Bekijk foto
-                            </button>
-                            ${wachtOpGoedkeuring ? `
-                                <div class="actie-knoppen">
-                                    <button class="goedkeur-btn" onclick="keurGoed('${team.teamcode}')">✅ Goedkeuren</button>
-                                    <button class="afkeur-btn" onclick="keurAf('${team.teamcode}')">❌ Afkeuren</button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                } else if (wachtOpGoedkeuring) {
-                    fotoHTML = `
-                        <div class="foto-sectie">
-                            <div class="geen-foto">Geen bewijs ontvangen</div>
-                            <div class="actie-knoppen">
-                                <button class="goedkeur-btn" onclick="keurGoed('${team.teamcode}')">✅ Goedkeuren</button>
-                                <button class="afkeur-btn" onclick="keurAf('${team.teamcode}')">❌ Afkeuren</button>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                teamsHTML += `
-                    <div class="team-kaart">
-                        <div class="team-header">
-                            <span class="team-naam">${team.teamNaam}</span>
-                            <span class="team-code">${team.teamcode}</span>
-                        </div>
-                        <div class="team-body">
-                            <div class="team-info-rij">
-                                <span class="info-label">Leden</span>
-                                <span class="info-waarde">${ledenHTML}</span>
-                            </div>
-                            <div class="team-info-rij">
-                                <span class="info-label">Locatie</span>
-                                <span class="info-waarde">${team.locatieNaam || 'Onbekend'}</span>
-                            </div>
-                            <div class="team-info-rij">
-                                <span class="info-label">Status</span>
-                                <span class="info-waarde">${getStatusBadge(team.status)}</span>
-                            </div>
-                            ${fotoHTML}
-                        </div>
-                    </div>
-                `;
-            });
-
-            teamsHTML += '</div>';
-            document.getElementById('teams-container').innerHTML = teamsHTML;
-        }
-
+        // Start dashboard updates
         window.onload = function() {
-            laadDashboard();
-            setInterval(laadDashboard, 10000);
+            updateDashboard();
+            dashboardInterval = setInterval(updateDashboard, 10000); // Update elke 10 seconden
         };
     </script>
+
+    <style>
+        .dashboard-sectie {
+            padding: 20px 0;
+        }
+
+        .timer-sectie {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #1a1a1a;
+            border-radius: 16px;
+            border: 2px solid #2D5016;
+        }
+
+        .dashboard-timer {
+            font-size: 3em;
+            font-weight: bold;
+            color: #8bc34a;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+        }
+
+        .dashboard-timer.urgent {
+            color: #ff5252;
+            animation: pulse 1s infinite;
+        }
+
+        .start-btn {
+            font-size: 1.3em;
+            padding: 20px 40px;
+            background: #8bc34a;
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+        }
+
+        .start-btn:hover {
+            background: #9ccc65;
+            transform: scale(1.05);
+        }
+
+        .team-card {
+            background: #1a1a1a;
+            border: 2px solid #2D5016;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .team-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .team-header h3 {
+            margin: 0;
+            color: #8bc34a;
+            font-size: 1.5em;
+        }
+
+        .team-code {
+            background: #2D5016;
+            padding: 5px 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #8bc34a;
+        }
+
+        .team-info {
+            margin-bottom: 15px;
+        }
+
+        .leden-sectie {
+            margin-bottom: 15px;
+        }
+
+        .lid-badge {
+            display: inline-block;
+            background: #2a2a2a;
+            padding: 8px 15px;
+            border-radius: 8px;
+            margin: 5px;
+            font-size: 0.9em;
+            border: 1px solid #444;
+        }
+
+        .captain-badge {
+            background: #2D5016;
+            border-color: #8bc34a;
+            color: #8bc34a;
+        }
+
+        .locatie-info {
+            margin: 10px 0;
+            font-size: 0.95em;
+            color: #ccc;
+        }
+
+        .status-sectie {
+            margin: 15px 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-info {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .status-warning {
+            background: #854d0e;
+            color: #fde047;
+        }
+
+        .status-success {
+            background: #166534;
+            color: #86efac;
+        }
+
+        .foto-sectie {
+            margin-top: 20px;
+            padding: 20px;
+            background: #0a0a0a;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+
+        .foto-link {
+            display: inline-block;
+            background: #2D5016;
+            color: #8bc34a;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .foto-link:hover {
+            background: #3a6b1f;
+            transform: scale(1.05);
+        }
+
+        .actie-knoppen {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-goedkeuren, .btn-afkeuren {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-goedkeuren {
+            background: #166534;
+            color: #86efac;
+        }
+
+        .btn-goedkeuren:hover {
+            background: #14532d;
+        }
+
+        .btn-afkeuren {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .btn-afkeuren:hover {
+            background: #991b1b;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+    </style>
 </body>
 </html>
