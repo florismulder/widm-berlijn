@@ -285,8 +285,22 @@
 
         #teams-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: 1fr;
             gap: 20px;
+        }
+
+        /* 2 kolommen op tablets en groter */
+        @media (min-width: 768px) {
+            #teams-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* 3 kolommen op grote schermen */
+        @media (min-width: 1400px) {
+            #teams-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
 
         .timer-sectie {

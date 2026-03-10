@@ -652,3 +652,27 @@ p {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
 }
+
+/* File inputs verbergen maar label klikbaar maken */
+input[type="file"] {
+    display: none;
+}
+
+.file-label {
+    display: inline-block;
+    background: #8bc34a;
+    color: #000;
+    padding: 15px 30px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+    margin: 20px 0;
+}
+
+.file-label:hover {
+    background: #9ccc65;
+    transform: scale(1.05);
+}
