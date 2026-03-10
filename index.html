@@ -40,6 +40,33 @@
             <button onclick="teamLogin()">Inloggen</button>
         </div>
 
+        <!-- Scherm 1.5: Startlocatie Bewijs -->
+        <div id="startlocatie-scherm" class="scherm hidden">
+            <h2>📍 Startlocatie bewijs</h2>
+            <p class="instructie">Upload bewijs dat jullie op de startlocatie zijn:</p>
+            <h3 id="startlocatie-naam" style="color: #8bc34a; margin: 20px 0;"></h3>
+            
+            <div id="startlocatie-upload-sectie">
+                <label for="startlocatie-foto-input" class="file-label">
+                    📸 Kies foto
+                </label>
+                <input type="file" id="startlocatie-foto-input" accept="image/*" onchange="toonStartlocatieBestandsnaam()">
+                <p id="startlocatie-bestandsnaam"></p>
+                <div id="startlocatie-voortgang-container" class="hidden">
+                    <div id="startlocatie-voortgang-balk"></div>
+                    <p id="startlocatie-voortgang-tekst">Uploaden...</p>
+                </div>
+                <button onclick="verstuurStartlocatieBewijs()" id="startlocatie-upload-btn">Verstuur bewijs</button>
+            </div>
+
+            <div id="startlocatie-wacht-sectie" class="hidden">
+                <div class="wacht-box">
+                    <p>⏳ De spelleider bekijkt jullie bewijs...</p>
+                    <p style="color: #999; font-size: 0.9em; margin-top: 10px;">Zodra goedgekeurd, kunnen jullie de rollen verdelen.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Scherm 2: Rollen Verdelen -->
         <div id="rollen-scherm" class="scherm hidden">
             <h2>Rollen verdelen</h2>
@@ -137,6 +164,7 @@
             <div id="wacht-sectie" class="hidden">
                 <div class="wacht-box">
                     <p>⏳ De spelleider bekijkt jullie bewijs...</p>
+                    <p id="wacht-reden" style="color: #999; font-size: 0.9em; margin-top: 10px;"></p>
                 </div>
             </div>
 
@@ -145,7 +173,7 @@
                     <h3>✅ Opdracht voltooid!</h3>
                     <p class="hint-label">Hint naar de volgende locatie:</p>
                     <p id="hint-tekst" class="hint-text"></p>
-                    <button onclick="naarVolgendeLocatie()" class="success-btn">We zijn er!</button>
+                    <button onclick="naarVolgendeLocatie()" class="success-btn">🎯 Ga naar volgende locatie</button>
                 </div>
             </div>
         </div>
@@ -266,16 +294,131 @@
 
             const leden = await apiCall('getLeden', { teamcode });
             
-            if (!leden || leden.length === 0) {
+            if (!leden || leden.error) {
                 toonPopup('Ongeldige teamcode! Probeer opnieuw.');
                 return;
             }
             
             huidigTeamcode = teamcode;
-            alleLeden = leden;
-            overgeblevenLeden = [...leden];
+            alleLeden = leden.leden;
             
-            toonRollenScherm();
+            // Check of startlocatie al goedgekeurd is
+            const startlocatieInfo = await apiCall('getStartlocatieInfo', { teamcode });
+            
+            if (startlocatieInfo.status === 'Startlocatie_Goedgekeurd') {
+                // Al goedgekeurd, ga direct naar rollen verdelen
+                overgeblevenLeden = [...alleLeden];
+                toonRollenScherm();
+            } else {
+                // Nog niet goedgekeurd, toon startlocatie scherm
+                toonStartlocatieScherm(startlocatieInfo);
+            }
+        }
+
+        // ===== STARTLOCATIE BEWIJS =====
+        let startlocatieCheckInterval = null;
+
+        function toonStartlocatieScherm(startlocatieInfo) {
+            document.getElementById('startlocatie-naam').textContent = startlocatieInfo.startLocatieNaam;
+            
+            if (startlocatieInfo.status === 'Wachten_op_Startlocatie_Goedkeuring') {
+                // Foto is al geupload, wacht op goedkeuring
+                document.getElementById('startlocatie-upload-sectie').classList.add('hidden');
+                document.getElementById('startlocatie-wacht-sectie').classList.remove('hidden');
+                startStartlocatieCheck();
+            } else {
+                // Nog geen foto geupload
+                document.getElementById('startlocatie-upload-sectie').classList.remove('hidden');
+                document.getElementById('startlocatie-wacht-sectie').classList.add('hidden');
+            }
+            
+            toonScherm('startlocatie-scherm');
+        }
+
+        function toonStartlocatieBestandsnaam() {
+            const input = document.getElementById('startlocatie-foto-input');
+            const naam = document.getElementById('startlocatie-bestandsnaam');
+            if (input.files.length > 0) {
+                naam.textContent = `✓ ${input.files[0].name}`;
+            } else {
+                naam.textContent = '';
+            }
+        }
+
+        async function verstuurStartlocatieBewijs() {
+            const input = document.getElementById('startlocatie-foto-input');
+            
+            if (!input.files || input.files.length === 0) {
+                toonPopup('Selecteer eerst een foto!');
+                return;
+            }
+            
+            const btn = document.getElementById('startlocatie-upload-btn');
+            btn.disabled = true;
+            btn.textContent = 'Uploaden...';
+
+            document.getElementById('startlocatie-voortgang-container').classList.remove('hidden');
+            let voortgang = 0;
+            const voortgangInterval = setInterval(() => {
+                voortgang = Math.min(voortgang + Math.random() * 15, 90);
+                document.getElementById('startlocatie-voortgang-balk').style.width = voortgang + '%';
+                document.getElementById('startlocatie-voortgang-tekst').textContent = Math.round(voortgang) + '%';
+            }, 300);
+            
+            const file = input.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = async function(e) {
+                const base64 = e.target.result;
+                
+                const uploadResult = await apiCall('uploadStartlocatieFoto', {
+                    teamcode: huidigTeamcode,
+                    fotoData: base64
+                }, 'POST');
+                
+                clearInterval(voortgangInterval);
+
+                if (uploadResult && uploadResult.success) {
+                    document.getElementById('startlocatie-voortgang-balk').style.width = '100%';
+                    document.getElementById('startlocatie-voortgang-tekst').textContent = '100% ✓';
+                    
+                    setTimeout(() => {
+                        document.getElementById('startlocatie-voortgang-container').classList.add('hidden');
+                        document.getElementById('startlocatie-voortgang-balk').style.width = '0%';
+                        document.getElementById('startlocatie-upload-sectie').classList.add('hidden');
+                        document.getElementById('startlocatie-wacht-sectie').classList.remove('hidden');
+                        btn.disabled = false;
+                        btn.textContent = 'Verstuur bewijs';
+                        input.value = '';
+                        document.getElementById('startlocatie-bestandsnaam').textContent = '';
+                        
+                        // Start polling voor goedkeuring
+                        startStartlocatieCheck();
+                    }, 1000);
+
+                } else {
+                    document.getElementById('startlocatie-voortgang-container').classList.add('hidden');
+                    toonPopup('Uploaden mislukt. Probeer opnieuw.');
+                    btn.disabled = false;
+                    btn.textContent = 'Verstuur bewijs';
+                }
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        function startStartlocatieCheck() {
+            if (startlocatieCheckInterval) clearInterval(startlocatieCheckInterval);
+            
+            startlocatieCheckInterval = setInterval(async () => {
+                const startlocatieInfo = await apiCall('getStartlocatieInfo', { teamcode: huidigTeamcode });
+                
+                if (startlocatieInfo.status === 'Startlocatie_Goedgekeurd') {
+                    clearInterval(startlocatieCheckInterval);
+                    overgeblevenLeden = [...alleLeden];
+                    toonRollenScherm();
+                }
+            }, 5000); // Check elke 5 seconden
         }
 
         // ===== ROLLEN VERDELEN =====
@@ -302,27 +445,27 @@
             });
         }
 
-            function startPrivacyCheck(naam) {
-    huidigeLid = naam;
-    document.getElementById('privacy-naam').textContent = naam;
-    toonScherm('privacy-scherm');
-    
-    let count = 3;
-    document.getElementById('countdown').textContent = count;
-    speelPiep();
-    
-    const timer = setInterval(() => {
-        count--;
-        document.getElementById('countdown').textContent = count;
-        speelPiep();
-        
-        if (count === 0) {
-            clearInterval(timer);
-            // Direct naar rol zonder 0 te tonen
-            toonRol();
+        function startPrivacyCheck(naam) {
+            huidigeLid = naam;
+            document.getElementById('privacy-naam').textContent = naam;
+            toonScherm('privacy-scherm');
+            
+            let count = 3;
+            document.getElementById('countdown').textContent = count;
+            speelPiep();
+            
+            const timer = setInterval(() => {
+                count--;
+                document.getElementById('countdown').textContent = count;
+                speelPiep();
+                
+                if (count === 0) {
+                    clearInterval(timer);
+                    // Direct naar rol zonder 0 te tonen
+                    toonRol();
+                }
+            }, 1000);
         }
-    }, 1000);
-}
 
         async function toonRol() {
             const data = await apiCall('onthulRol', {
@@ -339,7 +482,7 @@
             const isMol = data.rol === "DE MOL";
             
             rolContent.innerHTML = `
-                <h2>Hoi ${data.naam},</h2>
+                <h2>Hoi ${huidigeLid},</h2>
                 <div class="${isMol ? 'rol-mol' : 'rol-kandidaat'}">
                     ${data.rol}
                 </div>
@@ -372,19 +515,18 @@
 
         async function startCaptainOnthulling(naam) {
             huidigeCaptain = naam;
-            huidigeCaptainCode = huidigTeamcode + '-' + genereerCode(6);
             
-            await apiCall('setCaptainCode', {
+            const result = await apiCall('setCaptainCode', {
                 teamcode: huidigTeamcode,
-                captaincode: huidigeCaptainCode,
-                captainnaam: huidigeCaptain
+                captainNaam: naam
             }, 'POST');
 
-            await apiCall('updateStatus', {
-                teamcode: huidigTeamcode,
-                status: 'Wachten_op_Upload',
-                url: ''
-            }, 'POST');
+            if (!result || result.error) {
+                toonPopup('Fout bij captain selectie. Probeer opnieuw.');
+                return;
+            }
+
+            huidigeCaptainCode = result.captainCode;
 
             document.getElementById('captain-naam-onthulling').innerHTML = `
                 <div class="captain-reveal">
@@ -400,10 +542,10 @@
             toonScherm('captain-onthulling-scherm');
         }
 
-      function captainOpZelfdeTelefoon() {
-    localStorage.setItem('widm_teamcode', huidigTeamcode);
-    toonWachtscherm();
-}
+        function captainOpZelfdeTelefoon() {
+            localStorage.setItem('widm_teamcode', huidigTeamcode);
+            toonWachtscherm();
+        }
 
         function toonQRCode() {
             document.getElementById('captain-keuze-sectie').classList.add('hidden');
@@ -447,30 +589,14 @@
                 return;
             }
 
-            if (result.error === 'verlopen') {
-                toonPopup('❌ Deze code is verlopen! De spelleider moet een nieuwe code genereren.');
-                return;
-            }
-
             if (result.error) {
                 toonPopup('Ongeldige code! Controleer de code en probeer opnieuw.');
                 return;
             }
 
-            if (result.warning) {
-                toonPopup('⚠️ ' + result.message + ' Wil je toch doorgaan?', true, (doorgaan) => {
-                    if (doorgaan) {
-                        localStorage.setItem('widm_teamcode', result.teamcode);
-                        huidigTeamcode = result.teamcode;
-                        startSpel();
-                    }
-                });
-                return;
-            }
-
             localStorage.setItem('widm_teamcode', result.teamcode);
-huidigTeamcode = result.teamcode;
-toonWachtscherm();
+            huidigTeamcode = result.teamcode;
+            toonWachtscherm();
         }
 
         // ===== SPEL TIMER =====
@@ -531,18 +657,30 @@ toonWachtscherm();
                 startSpelTimer(startDatum);
             }
             
-            document.getElementById('locatie-naam').textContent = data.locatieNaam;
+            document.getElementById('locatie-naam').textContent = data.locatie;
             document.getElementById('opdracht-tekst').textContent = data.opdracht;
             
-            if (data.status === "Wachten_op_Upload" || data.status === "Rollen_Verdelen") {
+            // NIEUWE LOGICA: Check kanNaarVolgende
+            if (data.status === "Wachten_op_Upload") {
+                // Toon upload sectie
                 document.getElementById('upload-sectie').classList.remove('hidden');
                 document.getElementById('wacht-sectie').classList.add('hidden');
                 document.getElementById('hint-sectie').classList.add('hidden');
-            } else if (data.status === "Wachten op goedkeuring" || data.status === "Wachten_op_Goedkeuring") {
+            } else if (data.status === "Wachten_op_Goedkeuring") {
+                // Toon wacht sectie met reden
                 document.getElementById('upload-sectie').classList.add('hidden');
                 document.getElementById('wacht-sectie').classList.remove('hidden');
                 document.getElementById('hint-sectie').classList.add('hidden');
+                
+                // Toon wacht reden
+                const wachtRedenEl = document.getElementById('wacht-reden');
+                if (data.wachtReden) {
+                    wachtRedenEl.textContent = data.wachtReden;
+                } else {
+                    wachtRedenEl.textContent = '';
+                }
             } else if (data.status === "Goedgekeurd") {
+                // Toon hint sectie met volgende locatie knop
                 document.getElementById('upload-sectie').classList.add('hidden');
                 document.getElementById('wacht-sectie').classList.add('hidden');
                 document.getElementById('hint-sectie').classList.remove('hidden');
@@ -588,9 +726,8 @@ toonWachtscherm();
                 const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
                 
                 const uploadResult = await apiCall('uploadFoto', {
-                    base64: base64,
-                    filename: file.name,
-                    teamcode: teamcode
+                    teamcode: teamcode,
+                    fotoData: base64
                 }, 'POST');
                 
                 clearInterval(voortgangInterval);
@@ -598,12 +735,6 @@ toonWachtscherm();
                 if (uploadResult && uploadResult.success) {
                     document.getElementById('voortgang-balk').style.width = '100%';
                     document.getElementById('voortgang-tekst').textContent = '100% ✓';
-
-                    await apiCall('updateStatus', {
-                        teamcode: teamcode,
-                        status: 'Wachten op goedkeuring',
-                        url: uploadResult.url
-                    }, 'POST');
                     
                     setTimeout(() => {
                         document.getElementById('voortgang-balk-container').classList.add('hidden');
@@ -628,35 +759,39 @@ toonWachtscherm();
 
         async function naarVolgendeLocatie() {
             const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
-            const result = await apiCall('volgendeLocatie', { teamcode }, 'POST');
+            
+            const result = await apiCall('gaNaarVolgendeLocatie', { teamcode }, 'POST');
             
             if (result && result.success) {
+                toonPopup('🎯 Op naar de volgende locatie!');
                 updateSpelStatus();
+            } else if (result && result.error) {
+                toonPopup('Fout: ' + result.error);
             } else {
                 toonPopup('Fout bij naar volgende locatie gaan. Probeer opnieuw.');
             }
         }
 
         // ===== WACHTSCHERM =====
-function toonWachtscherm() {
-    toonScherm('wacht-op-start-scherm');
-    checkSpelGestart();
-}
-
-function checkSpelGestart() {
-    const checkInterval = setInterval(async () => {
-        const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
-        const data = await apiCall('getSpelData', { teamcode });
-        
-        document.getElementById('wacht-status').textContent = 
-            'Laatst gecheckt: ' + new Date().toLocaleTimeString('nl-NL');
-        
-        if (data && data.spelGestart) {
-            clearInterval(checkInterval);
-            startSpel();
+        function toonWachtscherm() {
+            toonScherm('wacht-op-start-scherm');
+            checkSpelGestart();
         }
-    }, 5000); // Check elke 5 seconden
-}
+
+        function checkSpelGestart() {
+            const checkInterval = setInterval(async () => {
+                const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
+                const data = await apiCall('getSpelData', { teamcode });
+                
+                document.getElementById('wacht-status').textContent = 
+                    'Laatst gecheckt: ' + new Date().toLocaleTimeString('nl-NL');
+                
+                if (data && data.spelGestart) {
+                    clearInterval(checkInterval);
+                    startSpel();
+                }
+            }, 5000); // Check elke 5 seconden
+        }
 
         // ===== INITIALISATIE =====
         window.onload = function() {
