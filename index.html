@@ -794,7 +794,7 @@
         }
 
         // ===== INITIALISATIE =====
-        window.onload = function() {
+        window.onload = async function() {
             const urlParams = new URLSearchParams(window.location.search);
             const captainCode = urlParams.get('code');
 
@@ -807,7 +807,32 @@
             const opgeslagenCode = localStorage.getItem('widm_teamcode');
             if (opgeslagenCode) {
                 huidigTeamcode = opgeslagenCode;
-                startSpel();
+                
+                // Check eerst startlocatie status
+                const startlocatieInfo = await apiCall('getStartlocatieInfo', { teamcode: huidigTeamcode });
+                
+                if (startlocatieInfo && startlocatieInfo.status) {
+                    if (startlocatieInfo.status === 'Startlocatie_Goedgekeurd') {
+                        // Check of spel al gestart is
+                        const spelData = await apiCall('getSpelData', { teamcode: huidigTeamcode });
+                        if (spelData && spelData.spelGestart) {
+                            startSpel();
+                        } else {
+                            toonWachtscherm();
+                        }
+                    } else {
+                        // Nog geen startlocatie goedgekeurd, toon startlocatie scherm
+                        const ledenData = await apiCall('getLeden', { teamcode: huidigTeamcode });
+                        if (ledenData && ledenData.leden) {
+                            alleLeden = ledenData.leden;
+                            toonStartlocatieScherm(startlocatieInfo);
+                        }
+                    }
+                } else {
+                    // Fout, clear localStorage en toon login
+                    localStorage.removeItem('widm_teamcode');
+                    toonScherm('login-scherm');
+                }
             } else {
                 toonScherm('login-scherm');
             }
