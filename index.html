@@ -400,10 +400,10 @@
             toonScherm('captain-onthulling-scherm');
         }
 
-        function captainOpZelfdeTelefoon() {
-            localStorage.setItem('widm_teamcode', huidigTeamcode);
-            startSpel();
-        }
+      function captainOpZelfdeTelefoon() {
+    localStorage.setItem('widm_teamcode', huidigTeamcode);
+    toonWachtscherm();
+}
 
         function toonQRCode() {
             document.getElementById('captain-keuze-sectie').classList.add('hidden');
@@ -469,8 +469,8 @@
             }
 
             localStorage.setItem('widm_teamcode', result.teamcode);
-            huidigTeamcode = result.teamcode;
-            startSpel();
+huidigTeamcode = result.teamcode;
+toonWachtscherm();
         }
 
         // ===== SPEL TIMER =====
@@ -636,6 +636,27 @@
                 toonPopup('Fout bij naar volgende locatie gaan. Probeer opnieuw.');
             }
         }
+
+        // ===== WACHTSCHERM =====
+function toonWachtscherm() {
+    toonScherm('wacht-op-start-scherm');
+    checkSpelGestart();
+}
+
+function checkSpelGestart() {
+    const checkInterval = setInterval(async () => {
+        const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
+        const data = await apiCall('getSpelData', { teamcode });
+        
+        document.getElementById('wacht-status').textContent = 
+            'Laatst gecheckt: ' + new Date().toLocaleTimeString('nl-NL');
+        
+        if (data && data.spelGestart) {
+            clearInterval(checkInterval);
+            startSpel();
+        }
+    }, 5000); // Check elke 5 seconden
+}
 
         // ===== INITIALISATIE =====
         window.onload = function() {
