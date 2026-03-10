@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spelleider Dashboard - WIDM Berlijn</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Admin-specific: bredere container voor 5 teams */
+        .container {
+            max-width: 95% !important;
+            margin: 0 auto;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -160,9 +167,12 @@
                 let statusClass = 'status-info';
                 let statusTekst = team.status;
                 
-                if (team.status === 'Wachten_op_Startlocatie_Goedkeuring') {
+                if (team.status === 'Wachten_op_Startlocatie_Upload') {
+                    statusClass = 'status-info';
+                    statusTekst = '📍 Wacht op startlocatie upload';
+                } else if (team.status === 'Wachten_op_Startlocatie_Goedkeuring') {
                     statusClass = 'status-warning';
-                    statusTekst = '📍 Wacht op startlocatie bewijs';
+                    statusTekst = '📍 Wacht op startlocatie goedkeuring';
                 } else if (team.status === 'Startlocatie_Goedgekeurd') {
                     statusClass = 'status-success';
                     statusTekst = '✅ Startlocatie goedgekeurd';
@@ -287,6 +297,12 @@
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 15px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .team-card {
+            min-width: 0; /* Fix voor grid overflow */
         }
 
         /* Op kleine schermen toch responsive maken */
