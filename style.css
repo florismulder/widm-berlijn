@@ -627,3 +627,28 @@ button,
 p {
     text-transform: none !important;
 }
+
+/* ===== WACHTSCHERM ===== */
+.wacht-op-start-box {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.spinner-groot {
+    width: 80px;
+    height: 80px;
+    border: 8px solid var(--light-grey);
+    border-top: 8px solid var(--widm-accent);
+    border-radius: 50%;
+    animation: spin 1.5s linear infinite;
+    margin: 0 auto 30px;
+}
+
+#wacht-status {
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
