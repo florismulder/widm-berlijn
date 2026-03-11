@@ -754,6 +754,27 @@
                 startSpelTimer(startDatum);
             }
             
+            // CHECK: Is het spel gestopt terwijl we aan het spelen waren?
+            if (!data.spelGestart && timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                clearInterval(spelInterval);
+                spelInterval = null;
+                
+                // Toon eindboodschap
+                document.getElementById('spel-scherm').innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <h1 style="font-size: 3em; color: #8bc34a; margin-bottom: 20px;">🛑</h1>
+                        <h2 style="color: #8bc34a; margin-bottom: 20px;">Spel is gestopt</h2>
+                        <p style="color: #e0e0e0; font-size: 1.1em; line-height: 1.8;">
+                            Het spel is beëindigd door de spelleider.<br><br>
+                            Bedankt voor het spelen!
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
             // Update locatie en opdracht ALLEEN als status dat toestaat
             // Verberg tijdens Op_weg en Wachten_op_Locatie_Check
             if (data.status === 'Op_weg' || data.status === 'Wachten_op_Locatie_Check') {
