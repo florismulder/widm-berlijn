@@ -182,6 +182,12 @@
                 } else if (team.status === 'Startlocatie_Goedgekeurd') {
                     statusClass = 'status-success';
                     statusTekst = '✅ Startlocatie goedgekeurd';
+                } else if (team.status === 'Op_weg') {
+                    statusClass = 'status-info';
+                    statusTekst = '🗺️ Onderweg naar locatie';
+                } else if (team.status === 'Wachten_op_Locatie_Check') {
+                    statusClass = 'status-warning';
+                    statusTekst = '📍 Wacht op GPS check';
                 } else if (team.status === 'Wachten_op_Upload') {
                     statusClass = 'status-info';
                     statusTekst = '⏳ Wacht op foto upload';
@@ -210,6 +216,18 @@
                             <div class="actie-knoppen">
                                 <button onclick="keurStartlocatieGoed('${team.teamcode}')" class="btn-goedkeuren">✅ Goedkeuren</button>
                                 <button onclick="keurStartlocatieAf('${team.teamcode}')" class="btn-afkeuren">❌ Afkeuren</button>
+                            </div>
+                        </div>
+                    `;
+                } else if (team.status === 'Wachten_op_Locatie_Check' && team.gpsLatitude && team.gpsLongitude) {
+                    // GPS locatie check
+                    const mapsUrl = `https://www.google.com/maps?q=${team.gpsLatitude},${team.gpsLongitude}`;
+                    fotoSectie = `
+                        <div class="foto-sectie">
+                            <a href="${mapsUrl}" target="_blank" class="foto-link">📍 Bekijk GPS locatie op kaart</a>
+                            <p style="color: #999; font-size: 0.85em; margin: 10px 0;">Lat: ${team.gpsLatitude}, Lng: ${team.gpsLongitude}</p>
+                            <div class="actie-knoppen">
+                                <button onclick="keurLocatieGoed('${team.teamcode}')" class="btn-goedkeuren">✅ Locatie goedkeuren</button>
                             </div>
                         </div>
                     `;
@@ -284,6 +302,15 @@
                 updateDashboard();
             } else {
                 alert('Fout bij afkeuren. Probeer opnieuw.');
+            }
+        }
+
+        async function keurLocatieGoed(teamcode) {
+            const result = await apiCall('keurLocatieGoed', { teamcode }, 'POST');
+            if (result && result.success) {
+                updateDashboard();
+            } else {
+                alert('Fout bij goedkeuren locatie. Probeer opnieuw.');
             }
         }
 

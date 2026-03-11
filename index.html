@@ -209,11 +209,11 @@
             </div>
 
             <div id="upload-sectie">
-                <label for="foto-input" class="file-label">
-                    📸 Kies foto of video
-                </label>
-                <input type="file" id="foto-input" accept="image/*,video/*" onchange="toonBestandsnaam()">
-                <p id="bestandsnaam"></p>
+                <button onclick="document.getElementById('foto-input').click()" style="background: transparent; color: #8bc34a; padding: 20px 40px; border: 3px solid #8bc34a; border-radius: 12px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin: 20px 0; display: block; width: 100%; text-transform: uppercase; letter-spacing: 2px;">
+                    📸 KIES FOTO OF VIDEO
+                </button>
+                <input type="file" id="foto-input" accept="image/*,video/*" onchange="toonBestandsnaam()" style="display: none;">
+                <p id="bestandsnaam" style="color: #8bc34a; margin: 10px 0;"></p>
                 <div id="voortgang-balk-container" class="hidden">
                     <div id="voortgang-balk"></div>
                     <p id="voortgang-tekst">Uploaden...</p>
@@ -234,6 +234,22 @@
                     <p class="hint-label">Hint naar de volgende locatie:</p>
                     <p id="hint-tekst" class="hint-text"></p>
                     <button onclick="naarVolgendeLocatie()" class="success-btn">🎯 Ga naar volgende locatie</button>
+                </div>
+            </div>
+
+            <div id="onderweg-sectie" class="hidden">
+                <div class="onderweg-box" style="background: #1a3009; padding: 30px; border-radius: 16px; border-left: 5px solid #8bc34a;">
+                    <h3 style="color: #8bc34a; margin-bottom: 20px;">🗺️ Onderweg naar volgende locatie</h3>
+                    <p style="color: #e0e0e0; margin-bottom: 20px;">Dit is nog een keer de hint:</p>
+                    <p id="onderweg-hint" class="hint-text" style="font-size: 1.1em; line-height: 1.7;"></p>
+                    <button onclick="deelLocatie()" class="success-btn" style="margin-top: 30px;">📍 Klik hier als jullie er zijn</button>
+                </div>
+            </div>
+
+            <div id="gps-wacht-sectie" class="hidden">
+                <div class="wacht-box">
+                    <p>⏳ De spelleider checkt jullie locatie...</p>
+                    <p style="color: #999; font-size: 0.9em; margin-top: 10px;">Zodra goedgekeurd, krijgen jullie de opdracht te zien.</p>
                 </div>
             </div>
         </div>
@@ -739,19 +755,20 @@
             document.getElementById('locatie-naam').textContent = data.locatie;
             document.getElementById('opdracht-tekst').textContent = data.opdracht;
             
-            // NIEUWE LOGICA: Check kanNaarVolgende
+            // STATUS FLOW: Hide all sections first
+            document.getElementById('upload-sectie').classList.add('hidden');
+            document.getElementById('wacht-sectie').classList.add('hidden');
+            document.getElementById('hint-sectie').classList.add('hidden');
+            document.getElementById('onderweg-sectie').classList.add('hidden');
+            document.getElementById('gps-wacht-sectie').classList.add('hidden');
+            
+            // Show correct section based on status
             if (data.status === "Wachten_op_Upload") {
-                // Toon upload sectie
+                // Toon upload sectie - opdracht zichtbaar
                 document.getElementById('upload-sectie').classList.remove('hidden');
-                document.getElementById('wacht-sectie').classList.add('hidden');
-                document.getElementById('hint-sectie').classList.add('hidden');
             } else if (data.status === "Wachten_op_Goedkeuring") {
-                // Toon wacht sectie met reden
-                document.getElementById('upload-sectie').classList.add('hidden');
+                // Toon wacht sectie - foto geupload, wacht op spelleider
                 document.getElementById('wacht-sectie').classList.remove('hidden');
-                document.getElementById('hint-sectie').classList.add('hidden');
-                
-                // Toon wacht reden
                 const wachtRedenEl = document.getElementById('wacht-reden');
                 if (data.wachtReden) {
                     wachtRedenEl.textContent = data.wachtReden;
@@ -759,11 +776,16 @@
                     wachtRedenEl.textContent = '';
                 }
             } else if (data.status === "Goedgekeurd") {
-                // Toon hint sectie met volgende locatie knop
-                document.getElementById('upload-sectie').classList.add('hidden');
-                document.getElementById('wacht-sectie').classList.add('hidden');
+                // Toon hint sectie - opdracht voltooid, toon hint
                 document.getElementById('hint-sectie').classList.remove('hidden');
                 document.getElementById('hint-tekst').textContent = data.hint;
+            } else if (data.status === "Op_weg") {
+                // Toon onderweg sectie - team is onderweg naar locatie
+                document.getElementById('onderweg-sectie').classList.remove('hidden');
+                document.getElementById('onderweg-hint').textContent = data.hint;
+            } else if (data.status === "Wachten_op_Locatie_Check") {
+                // Toon GPS wacht sectie - GPS gedeeld, wacht op spelleider check
+                document.getElementById('gps-wacht-sectie').classList.remove('hidden');
             }
         }
 
@@ -842,13 +864,59 @@
             const result = await apiCall('gaNaarVolgendeLocatie', { teamcode }, 'POST');
             
             if (result && result.success) {
-                toonPopup('🎯 Op naar de volgende locatie!');
+                // Ga naar onderweg scherm
                 updateSpelStatus();
             } else if (result && result.error) {
                 toonPopup('Fout: ' + result.error);
             } else {
                 toonPopup('Fout bij naar volgende locatie gaan. Probeer opnieuw.');
             }
+        }
+
+        async function deelLocatie() {
+            if (!navigator.geolocation) {
+                toonPopup('❌ GPS is niet beschikbaar op dit apparaat.');
+                return;
+            }
+
+            toonPopup('📍 GPS locatie ophalen...');
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
+
+                    const result = await apiCall('stuurLocatie', {
+                        teamcode,
+                        latitude: latitude.toString(),
+                        longitude: longitude.toString()
+                    }, 'POST');
+
+                    if (result && result.success) {
+                        updateSpelStatus();
+                    } else {
+                        toonPopup('❌ Fout bij delen van locatie. Probeer opnieuw.');
+                    }
+                },
+                (error) => {
+                    let errorMsg = '';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = '❌ GPS toegang geweigerd. Sta locatie toe in je browser instellingen.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = '❌ Locatie informatie niet beschikbaar.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = '❌ GPS request timeout. Probeer opnieuw.';
+                            break;
+                        default:
+                            errorMsg = '❌ Onbekende GPS fout.';
+                    }
+                    toonPopup(errorMsg);
+                }
+            );
         }
 
         // ===== WACHTSCHERM =====
