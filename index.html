@@ -331,12 +331,15 @@
                     const response = await fetch(url);
                     return await response.json();
                 } else {
+                    // POST: gebruik URLSearchParams (form data) om CORS preflight te vermijden
+                    const formData = new URLSearchParams();
+                    Object.keys(params).forEach(key => {
+                        formData.append(key, params[key]);
+                    });
+                    
                     const response = await fetch(API_URL + '?action=' + action, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(params)
+                        body: formData
                     });
                     return await response.json();
                 }
@@ -434,10 +437,14 @@
             reader.onload = async function(e) {
                 const base64 = e.target.result;
                 
+                console.log('Uploading to API:', huidigTeamcode);
+                
                 const uploadResult = await apiCall('uploadStartlocatieFoto', {
                     teamcode: huidigTeamcode,
                     fotoData: base64
                 }, 'POST');
+                
+                console.log('Upload result:', uploadResult);
                 
                 clearInterval(voortgangInterval);
 
@@ -461,7 +468,9 @@
 
                 } else {
                     document.getElementById('startlocatie-voortgang-container').classList.add('hidden');
-                    toonPopup('Uploaden mislukt. Probeer opnieuw.');
+                    const errorMsg = uploadResult?.error || 'Onbekende fout';
+                    console.error('Upload failed:', errorMsg, uploadResult);
+                    toonPopup('Uploaden mislukt: ' + errorMsg);
                     btn.disabled = false;
                     btn.textContent = 'Verstuur bewijs';
                 }

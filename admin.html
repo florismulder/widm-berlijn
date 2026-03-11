@@ -72,12 +72,15 @@
                     const response = await fetch(url);
                     return await response.json();
                 } else {
+                    // POST: gebruik URLSearchParams (form data) om CORS preflight te vermijden
+                    const formData = new URLSearchParams();
+                    Object.keys(params).forEach(key => {
+                        formData.append(key, params[key]);
+                    });
+                    
                     const response = await fetch(API_URL + '?action=' + action, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(params)
+                        body: formData
                     });
                     return await response.json();
                 }
