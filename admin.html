@@ -24,13 +24,13 @@
         <div class="dashboard-sectie">
             <!-- Timer sectie -->
             <div class="timer-sectie">
+                <div id="spel-gestart-badge" style="display:none; background: #2D5016; color: #8bc34a; padding: 8px 16px; border-radius: 8px; text-align: center; font-size: 0.9em; margin-bottom: 15px; border: 1px solid #8bc34a;">
+                    ✅ Spel loopt
+                </div>
                 <div id="dashboard-timer" class="dashboard-timer">
                     ⏱️ <span id="dashboard-timer-tekst">2:00:00</span>
                 </div>
                 <button id="start-spel-btn" onclick="bevestigStart()" class="start-btn">🚀 START HET SPEL</button>
-                <div id="spel-gestart-badge" class="status-badge" style="display:none; background: #8bc34a; margin-top: 10px;">
-                    ✅ Spel is gestart
-                </div>
             </div>
 
             <!-- Teams overzicht -->
@@ -220,8 +220,8 @@
                         </div>
                     `;
                 } else if (team.status === 'Wachten_op_Locatie_Check' && team.gpsLatitude && team.gpsLongitude) {
-                    // GPS locatie check
-                    const mapsUrl = `https://www.google.com/maps?q=${team.gpsLatitude},${team.gpsLongitude}`;
+                    // GPS locatie check met zoom 17 voor straatniveau
+                    const mapsUrl = `https://www.google.com/maps?q=${team.gpsLatitude},${team.gpsLongitude}&z=17`;
                     fotoSectie = `
                         <div class="foto-sectie">
                             <a href="${mapsUrl}" target="_blank" class="foto-link">📍 Bekijk GPS locatie op kaart</a>

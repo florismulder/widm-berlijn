@@ -200,19 +200,21 @@
             <!-- Timer bovenaan -->
             <div id="spel-timer" class="spel-timer hidden">⏱️ <span id="spel-timer-tekst">2:00:00</span></div>
             
-            <div class="status-badge" id="status-badge">Huidige locatie</div>
-            <h2 id="locatie-naam"></h2>
-            
-            <div class="opdracht-box">
-                <h3>📋 De opdracht</h3>
-                <p id="opdracht-tekst"></p>
+            <div id="locatie-opdracht-sectie">
+                <div class="status-badge" id="status-badge">Huidige locatie</div>
+                <h2 id="locatie-naam"></h2>
+                
+                <div class="opdracht-box">
+                    <h3>📋 De opdracht</h3>
+                    <p id="opdracht-tekst"></p>
+                </div>
             </div>
 
             <div id="upload-sectie">
                 <button onclick="document.getElementById('foto-input').click()" style="background: transparent; color: #8bc34a; padding: 20px 40px; border: 3px solid #8bc34a; border-radius: 12px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin: 20px 0; display: block; width: 100%; text-transform: uppercase; letter-spacing: 2px;">
-                    📸 KIES FOTO OF VIDEO
+                    📸 KIES FOTO
                 </button>
-                <input type="file" id="foto-input" accept="image/*,video/*" onchange="toonBestandsnaam()" style="display: none;">
+                <input type="file" id="foto-input" accept="image/*" onchange="toonBestandsnaam()" style="display: none;">
                 <p id="bestandsnaam" style="color: #8bc34a; margin: 10px 0;"></p>
                 <div id="voortgang-balk-container" class="hidden">
                     <div id="voortgang-balk"></div>
@@ -752,10 +754,18 @@
                 startSpelTimer(startDatum);
             }
             
-            document.getElementById('locatie-naam').textContent = data.locatie;
-            document.getElementById('opdracht-tekst').textContent = data.opdracht;
+            // Update locatie en opdracht ALLEEN als status dat toestaat
+            // Verberg tijdens Op_weg en Wachten_op_Locatie_Check
+            if (data.status === 'Op_weg' || data.status === 'Wachten_op_Locatie_Check') {
+                document.getElementById('locatie-naam').textContent = '???';
+                document.getElementById('opdracht-tekst').textContent = 'Zoek eerst de locatie...';
+            } else {
+                document.getElementById('locatie-naam').textContent = data.locatie;
+                document.getElementById('opdracht-tekst').textContent = data.opdracht;
+            }
             
             // STATUS FLOW: Hide all sections first
+            document.getElementById('locatie-opdracht-sectie').classList.add('hidden');
             document.getElementById('upload-sectie').classList.add('hidden');
             document.getElementById('wacht-sectie').classList.add('hidden');
             document.getElementById('hint-sectie').classList.add('hidden');
@@ -765,9 +775,11 @@
             // Show correct section based on status
             if (data.status === "Wachten_op_Upload") {
                 // Toon upload sectie - opdracht zichtbaar
+                document.getElementById('locatie-opdracht-sectie').classList.remove('hidden');
                 document.getElementById('upload-sectie').classList.remove('hidden');
             } else if (data.status === "Wachten_op_Goedkeuring") {
                 // Toon wacht sectie - foto geupload, wacht op spelleider
+                document.getElementById('locatie-opdracht-sectie').classList.remove('hidden');
                 document.getElementById('wacht-sectie').classList.remove('hidden');
                 const wachtRedenEl = document.getElementById('wacht-reden');
                 if (data.wachtReden) {
@@ -777,14 +789,15 @@
                 }
             } else if (data.status === "Goedgekeurd") {
                 // Toon hint sectie - opdracht voltooid, toon hint
+                document.getElementById('locatie-opdracht-sectie').classList.remove('hidden');
                 document.getElementById('hint-sectie').classList.remove('hidden');
                 document.getElementById('hint-tekst').textContent = data.hint;
             } else if (data.status === "Op_weg") {
-                // Toon onderweg sectie - team is onderweg naar locatie
+                // Toon onderweg sectie - team is onderweg naar locatie (GEEN locatie/opdracht!)
                 document.getElementById('onderweg-sectie').classList.remove('hidden');
                 document.getElementById('onderweg-hint').textContent = data.hint;
             } else if (data.status === "Wachten_op_Locatie_Check") {
-                // Toon GPS wacht sectie - GPS gedeeld, wacht op spelleider check
+                // Toon GPS wacht sectie - GPS gedeeld, wacht op spelleider check (GEEN locatie/opdracht!)
                 document.getElementById('gps-wacht-sectie').classList.remove('hidden');
             }
         }
@@ -864,7 +877,15 @@
             const result = await apiCall('gaNaarVolgendeLocatie', { teamcode }, 'POST');
             
             if (result && result.success) {
-                // Ga naar onderweg scherm
+                // Direct UI updaten naar onderweg modus (sneller dan wachten op API)
+                document.getElementById('locatie-opdracht-sectie').classList.add('hidden');
+                document.getElementById('upload-sectie').classList.add('hidden');
+                document.getElementById('wacht-sectie').classList.add('hidden');
+                document.getElementById('hint-sectie').classList.add('hidden');
+                document.getElementById('onderweg-sectie').classList.remove('hidden');
+                document.getElementById('gps-wacht-sectie').classList.add('hidden');
+                
+                // Dan data ophalen van backend
                 updateSpelStatus();
             } else if (result && result.error) {
                 toonPopup('Fout: ' + result.error);
@@ -894,6 +915,11 @@
                     }, 'POST');
 
                     if (result && result.success) {
+                        // Direct UI updaten naar GPS wacht scherm
+                        document.getElementById('onderweg-sectie').classList.add('hidden');
+                        document.getElementById('gps-wacht-sectie').classList.remove('hidden');
+                        
+                        // Dan data ophalen van backend
                         updateSpelStatus();
                     } else {
                         toonPopup('❌ Fout bij delen van locatie. Probeer opnieuw.');
