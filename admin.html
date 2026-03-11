@@ -27,6 +27,13 @@
                 <div id="spel-gestart-badge" style="display:none; background: #2D5016; color: #8bc34a; padding: 8px 16px; border-radius: 8px; text-align: center; font-size: 0.9em; margin-bottom: 15px; border: 1px solid #8bc34a;">
                     ✅ Spel loopt
                 </div>
+                <div id="spel-gestopt-sectie" style="display:none; background: #1a1a1a; border: 2px solid #d32f2f; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+                    <h3 style="color: #d32f2f; margin: 0 0 15px 0; text-align: center;">🛑 Spel is gestopt</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="hervatSpel()" style="flex: 1; min-width: 200px; padding: 15px 20px; background: #8bc34a; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">▶️ Hervat spel</button>
+                        <button onclick="bevestigReset()" style="flex: 1; min-width: 200px; padding: 15px 20px; background: #ff9800; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">🔄 Reset spel</button>
+                    </div>
+                </div>
                 <div id="dashboard-timer" class="dashboard-timer">
                     ⏱️ <span id="dashboard-timer-tekst">2:00:00</span>
                 </div>
@@ -51,6 +58,32 @@
             <div class="popup-footer">
                 <button onclick="startSpel()" style="background: #8bc34a;">✅ Ja, start!</button>
                 <button onclick="sluitBevestig()" style="background: #666; margin-left: 10px;">Annuleer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stop popup -->
+    <div id="stop-overlay" class="popup-overlay hidden">
+        <div class="popup-box">
+            <div class="popup-header" style="background: #d32f2f; color: #fff;">
+                <span>🛑 Spel stoppen</span>
+            </div>
+            <div class="popup-body">
+                <p style="margin-bottom: 20px;">Waarom wil je het spel stoppen?</p>
+                <select id="stop-reden" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #2D5016; background: #1a1a1a; color: #e0e0e0; font-size: 1em; margin-bottom: 15px;">
+                    <option value="Een team is klaar">✅ Een team is klaar</option>
+                    <option value="Tijd is afgelopen">⏰ Tijd is afgelopen</option>
+                    <option value="Noodsituatie">🚨 Noodsituatie</option>
+                    <option value="Technische problemen">🔧 Technische problemen</option>
+                    <option value="Anders">📝 Anders...</option>
+                </select>
+                <div id="stop-reden-custom" style="display:none; margin-top: 10px;">
+                    <input type="text" id="stop-reden-tekst" placeholder="Typ je eigen reden..." style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #2D5016; background: #1a1a1a; color: #e0e0e0; font-size: 1em;">
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button onclick="bevestigStopMetReden()" style="background: #d32f2f; color: #fff;">🛑 Stop spel</button>
+                <button onclick="sluitStopPopup()" style="background: #666; margin-left: 10px;">Annuleer</button>
             </div>
         </div>
     </div>
@@ -111,19 +144,67 @@
         }
 
         function bevestigStop() {
-            if (confirm('⚠️ WEET JE HET ZEKER?\n\nHet spel wordt gestopt voor ALLE teams.\n\nDit kan alleen als:\n- Een team klaar is\n- Er een noodsituatie is\n- De tijd is afgelopen')) {
-                stopSpel();
+            document.getElementById('stop-overlay').classList.remove('hidden');
+            
+            // Toon/verberg custom reden veld
+            document.getElementById('stop-reden').addEventListener('change', function() {
+                if (this.value === 'Anders') {
+                    document.getElementById('stop-reden-custom').style.display = 'block';
+                } else {
+                    document.getElementById('stop-reden-custom').style.display = 'none';
+                }
+            });
+        }
+
+        function sluitStopPopup() {
+            document.getElementById('stop-overlay').classList.add('hidden');
+        }
+
+        async function bevestigStopMetReden() {
+            const redenSelect = document.getElementById('stop-reden').value;
+            let reden = redenSelect;
+            
+            if (redenSelect === 'Anders') {
+                const customReden = document.getElementById('stop-reden-tekst').value.trim();
+                if (!customReden) {
+                    alert('⚠️ Vul een reden in!');
+                    return;
+                }
+                reden = customReden;
+            }
+            
+            sluitStopPopup();
+            
+            const result = await apiCall('stopSpel', { reden }, 'POST');
+            if (result && result.success) {
+                updateDashboard();
+            } else {
+                alert('❌ Fout bij stoppen van spel. Probeer opnieuw.');
             }
         }
 
         async function stopSpel() {
             const result = await apiCall('stopSpel', {}, 'POST');
             if (result && result.success) {
-                alert('🛑 Spel is gestopt!');
                 updateDashboard();
             } else {
                 alert('❌ Fout bij stoppen van spel. Probeer opnieuw.');
             }
+        }
+
+        async function hervatSpel() {
+            if (confirm('▶️ Spel hervatten?\n\nHet spel gaat verder waar het was gebleven.')) {
+                const result = await apiCall('startSpel', {}, 'POST');
+                if (result && result.success) {
+                    updateDashboard();
+                } else {
+                    alert('❌ Fout bij hervatten. Probeer opnieuw.');
+                }
+            }
+        }
+
+        function bevestigReset() {
+            alert('🔄 SPEL RESETTEN\n\nOm het spel volledig te resetten:\n\n1. Ga naar script.google.com\n2. Open je Apps Script project\n3. Selecteer de functie "initSpel" in de dropdown\n4. Klik op ▶️ Run\n5. Refresh deze pagina\n\n⚠️ Alle teamdata wordt gewist!');
         }
 
         function startDashboardTimer(startDatum) {
@@ -166,7 +247,9 @@
 
             // Update timer en spel status
             if (data.spelGestart) {
+                // Spel loopt
                 document.getElementById('spel-gestart-badge').style.display = 'block';
+                document.getElementById('spel-gestopt-sectie').style.display = 'none';
                 document.getElementById('start-spel-btn').style.display = 'none';
                 document.getElementById('stop-spel-btn').style.display = 'block';
                 
@@ -174,8 +257,34 @@
                     const startDatum = new Date(data.startTijd).getTime();
                     startDashboardTimer(startDatum);
                 }
-            } else {
+            } else if (data.startTijd) {
+                // Spel is gestopt (was gestart, maar nu niet meer)
                 document.getElementById('spel-gestart-badge').style.display = 'none';
+                const gestoptSectie = document.getElementById('spel-gestopt-sectie');
+                gestoptSectie.style.display = 'block';
+                document.getElementById('start-spel-btn').style.display = 'none';
+                document.getElementById('stop-spel-btn').style.display = 'none';
+                
+                // Toon stop reden (verwijder oude eerst)
+                const oudeReden = gestoptSectie.querySelector('.stop-reden-tekst');
+                if (oudeReden) oudeReden.remove();
+                
+                if (data.stopReden) {
+                    const redenEl = document.createElement('p');
+                    redenEl.className = 'stop-reden-tekst';
+                    redenEl.style.cssText = 'color: #ff9800; margin: 15px 0; font-size: 1.1em;';
+                    redenEl.innerHTML = `<strong>Reden:</strong> ${data.stopReden}`;
+                    gestoptSectie.querySelector('h3').insertAdjacentElement('afterend', redenEl);
+                }
+                
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            } else {
+                // Spel is nooit gestart
+                document.getElementById('spel-gestart-badge').style.display = 'none';
+                document.getElementById('spel-gestopt-sectie').style.display = 'none';
                 document.getElementById('start-spel-btn').style.display = 'block';
                 document.getElementById('stop-spel-btn').style.display = 'none';
                 
@@ -548,10 +657,12 @@
         .actie-knoppen {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .btn-goedkeuren, .btn-afkeuren {
             flex: 1;
+            min-width: 120px;
             padding: 15px;
             border: none;
             border-radius: 8px;
