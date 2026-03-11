@@ -88,6 +88,47 @@
         </div>
     </div>
 
+    <!-- Hervat popup -->
+    <div id="hervat-overlay" class="popup-overlay hidden">
+        <div class="popup-box">
+            <div class="popup-header" style="background: #8bc34a; color: #000;">
+                <span>▶️ Spel hervatten</span>
+            </div>
+            <div class="popup-body">
+                <p style="margin-bottom: 20px;">Het spel gaat verder waar het was gebleven.</p>
+                <p style="color: #999; font-size: 0.9em;">De timer loopt door vanaf het moment dat het spel werd gestopt.</p>
+            </div>
+            <div class="popup-footer">
+                <button onclick="bevestigHervat()" style="background: #8bc34a; color: #000;">▶️ Ja, hervat!</button>
+                <button onclick="sluitHervatPopup()" style="background: #666; margin-left: 10px;">Annuleer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset popup -->
+    <div id="reset-overlay" class="popup-overlay hidden">
+        <div class="popup-box">
+            <div class="popup-header" style="background: #ff9800; color: #000;">
+                <span>🔄 Spel resetten</span>
+            </div>
+            <div class="popup-body">
+                <p style="margin-bottom: 20px; font-weight: bold; color: #d32f2f;">⚠️ Dit wist ALLE teamdata!</p>
+                <p style="margin-bottom: 15px;">Om het spel volledig te resetten:</p>
+                <ol style="text-align: left; line-height: 1.8; color: #e0e0e0;">
+                    <li>Ga naar <strong>script.google.com</strong></li>
+                    <li>Open je Apps Script project</li>
+                    <li>Selecteer de functie <strong>"initSpel"</strong> in de dropdown</li>
+                    <li>Klik op ▶️ <strong>Run</strong></li>
+                    <li>Refresh deze pagina</li>
+                </ol>
+                <p style="margin-top: 20px; color: #999; font-size: 0.9em;">Na reset kunnen teams opnieuw beginnen vanaf startlocatie.</p>
+            </div>
+            <div class="popup-footer">
+                <button onclick="sluitResetPopup()" style="background: #8bc34a; color: #000;">Begrepen</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxtZUrnqR37X_HxUodU7U5AlYwrIhbtA8xgGDvlzqYReY86UrMcqIOvyJ1osRkTX-Alww/exec";
         const SPEL_DUUR = 2 * 60 * 60 * 1000;
@@ -193,18 +234,29 @@
         }
 
         async function hervatSpel() {
-            if (confirm('▶️ Spel hervatten?\n\nHet spel gaat verder waar het was gebleven.')) {
-                const result = await apiCall('startSpel', {}, 'POST');
-                if (result && result.success) {
-                    updateDashboard();
-                } else {
-                    alert('❌ Fout bij hervatten. Probeer opnieuw.');
-                }
+            document.getElementById('hervat-overlay').classList.remove('hidden');
+        }
+
+        function sluitHervatPopup() {
+            document.getElementById('hervat-overlay').classList.add('hidden');
+        }
+
+        async function bevestigHervat() {
+            sluitHervatPopup();
+            const result = await apiCall('startSpel', {}, 'POST');
+            if (result && result.success) {
+                updateDashboard();
+            } else {
+                alert('❌ Fout bij hervatten. Probeer opnieuw.');
             }
         }
 
         function bevestigReset() {
-            alert('🔄 SPEL RESETTEN\n\nOm het spel volledig te resetten:\n\n1. Ga naar script.google.com\n2. Open je Apps Script project\n3. Selecteer de functie "initSpel" in de dropdown\n4. Klik op ▶️ Run\n5. Refresh deze pagina\n\n⚠️ Alle teamdata wordt gewist!');
+            document.getElementById('reset-overlay').classList.remove('hidden');
+        }
+
+        function sluitResetPopup() {
+            document.getElementById('reset-overlay').classList.add('hidden');
         }
 
         function startDashboardTimer(startDatum) {

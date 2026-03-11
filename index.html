@@ -758,8 +758,7 @@
             if (!data.spelGestart && timerInterval) {
                 clearInterval(timerInterval);
                 timerInterval = null;
-                clearInterval(spelInterval);
-                spelInterval = null;
+                // BELANGRIJK: Stop spelInterval NIET, blijf pollen voor hervat detectie
                 
                 // Toon eindboodschap met reden
                 const redenTekst = data.stopReden ? `<p style="color: #ff9800; font-weight: bold; margin: 20px 0; font-size: 1.2em;">${data.stopReden}</p>` : '';
@@ -773,8 +772,18 @@
                             Het spel is beëindigd door de spelleider.<br><br>
                             Bedankt voor het spelen!
                         </p>
+                        <p style="color: #666; font-size: 0.9em; margin-top: 30px;">
+                            ⏳ Wachten op spelleider...
+                        </p>
                     </div>
                 `;
+                return;
+            }
+            
+            // CHECK: Is het spel hervat na stoppen?
+            if (data.spelGestart && !timerInterval && data.startTijd) {
+                // Spel is hervat! Reload de pagina voor een frisse start
+                location.reload();
                 return;
             }
             
@@ -898,6 +907,9 @@
         async function naarVolgendeLocatie() {
             const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
             
+            // Haal de huidige hint op (die we net hebben gezien)
+            const huidigeHint = document.getElementById('hint-tekst').textContent;
+            
             const result = await apiCall('gaNaarVolgendeLocatie', { teamcode }, 'POST');
             
             if (result && result.success) {
@@ -908,6 +920,9 @@
                 document.getElementById('hint-sectie').classList.add('hidden');
                 document.getElementById('onderweg-sectie').classList.remove('hidden');
                 document.getElementById('gps-wacht-sectie').classList.add('hidden');
+                
+                // Toon de hint DIRECT (zonder te wachten op updateSpelStatus)
+                document.getElementById('onderweg-hint').textContent = huidigeHint;
                 
                 // Dan data ophalen van backend
                 updateSpelStatus();
