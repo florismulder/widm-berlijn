@@ -102,7 +102,7 @@
             sluitBevestig();
             const result = await apiCall('startSpel', {}, 'POST');
             if (result && result.success) {
-                alert('✅ Spel is gestart! Alle teams kunnen nu beginnen.');
+                // Direct dashboard updaten zonder popup
                 updateDashboard();
             } else {
                 alert('❌ Fout bij starten van spel. Probeer opnieuw.');
