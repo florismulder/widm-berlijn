@@ -235,10 +235,10 @@
     <div id="sound-popup" class="popup-overlay hidden">
         <div class="popup-box">
             <div class="popup-header">
-                <span>🔊 SOUND ON</span>
+                <span>🔊 GELUID AAN</span>
             </div>
             <div class="popup-body">
-                <p style="font-size: 1.3em; font-weight: bold; color: #8bc34a;">Zet sound aan voor de beste ervaring!</p>
+                <p style="font-size: 1.3em; font-weight: bold; color: #8bc34a;">Zet geluid aan voor de beste ervaring!</p>
             </div>
             <div class="popup-footer">
                 <button onclick="enableSound()" style="background: #8bc34a; color: #000;">OK</button>
@@ -459,6 +459,7 @@
         // Alle audio bestanden van GitHub
         const AUDIO = {
             wachtMuziek: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/WIDM_Berlijn_begin.mp3'),
+            wachtenOpSpelStart: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/wachten_op_spel_start.mp3'),
             stopMuziek: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/WIDM_Berlijn_einde.mp3'),
             goedgekeurd: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/goedgekeurd.mp3'),
             afgekeurd: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/afgekeurd.mp3'),
@@ -649,11 +650,19 @@
             huidigTeamcode = teamcode;
             alleLeden = leden.leden;
             
+            // Sla teamcode op in localStorage
+            localStorage.setItem('widm_teamcode', teamcode);
+            
             // Start wachtmuziek
             playMuziek('wachtMuziek');
             
             // Check of startlocatie al goedgekeurd is
             const startlocatieInfo = await apiCall('getStartlocatieInfo', { teamcode });
+            
+            if (!startlocatieInfo) {
+                toonPopup('Fout bij ophalen startlocatie info. Probeer opnieuw.');
+                return;
+            }
             
             if (startlocatieInfo.status === 'Startlocatie_Goedgekeurd') {
                 // Al goedgekeurd, ga direct naar rollen verdelen
@@ -1328,6 +1337,7 @@
         // ===== WACHTSCHERM =====
         function toonWachtscherm() {
             stopMuziek();  // Stop intro muziek
+            playMuziek('wachtenOpSpelStart');  // Start wacht muziek
             toonScherm('wacht-op-start-scherm');
             checkSpelGestart();
         }
@@ -1349,24 +1359,6 @@
 
         // ===== INITIALISATIE =====
         window.onload = async function() {
-            // Check of sound popup getoond moet worden (eerste keer)
-            const soundPref = localStorage.getItem('widm_sound');
-            if (soundPref === null) {
-                document.getElementById('sound-popup').classList.remove('hidden');
-            } else {
-                // Update UI based on saved preference
-                soundEnabled = soundPref === 'true';
-                const icon = document.getElementById('sound-icon');
-                const toggle = document.getElementById('sound-toggle');
-                if (soundEnabled) {
-                    icon.textContent = '🔊';
-                    toggle.style.background = '#2D5016';
-                } else {
-                    icon.textContent = '🔇';
-                    toggle.style.background = '#666';
-                }
-            }
-            
             const urlParams = new URLSearchParams(window.location.search);
             const captainCode = urlParams.get('code');
 
@@ -1414,8 +1406,29 @@
                     toonScherm('login-scherm');
                 }
             } else {
+                // Toon login scherm EERST
                 toonScherm('login-scherm');
             }
+            
+            // Check sound popup NA het tonen van schermen (met kleine delay)
+            setTimeout(() => {
+                const soundPref = localStorage.getItem('widm_sound');
+                if (soundPref === null) {
+                    document.getElementById('sound-popup').classList.remove('hidden');
+                } else {
+                    // Update UI based on saved preference
+                    soundEnabled = soundPref === 'true';
+                    const icon = document.getElementById('sound-icon');
+                    const toggle = document.getElementById('sound-toggle');
+                    if (soundEnabled) {
+                        icon.textContent = '🔊';
+                        toggle.style.background = '#2D5016';
+                    } else {
+                        icon.textContent = '🔇';
+                        toggle.style.background = '#666';
+                    }
+                }
+            }, 100);
         };
     </script>
 
