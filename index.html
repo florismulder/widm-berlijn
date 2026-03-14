@@ -8,6 +8,183 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
+        /* ===== BASIS STYLING ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: #000;
+            color: #e0e0e0;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 20px;
+            position: relative;
+        }
+
+        .header-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            box-shadow: 0 0 20px rgba(139, 195, 74, 0.5);
+        }
+
+        h1 {
+            color: #8bc34a;
+            font-size: 2em;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(139, 195, 74, 0.5);
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        h2 {
+            color: #8bc34a;
+            margin-bottom: 20px;
+        }
+
+        .instructie {
+            color: #e0e0e0;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        /* ===== SCHERMEN ===== */
+        .scherm {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .scherm.active {
+            display: block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ===== INPUTS & BUTTONS ===== */
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #1a1a1a;
+            border: 2px solid #2D5016;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 1em;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #8bc34a;
+            box-shadow: 0 0 10px rgba(139, 195, 74, 0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #2D5016;
+            color: #8bc34a;
+            border: 2px solid #8bc34a;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #8bc34a;
+            color: #000;
+            transform: scale(1.02);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ===== POPUPS ===== */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-overlay:not(.hidden) {
+            display: flex;
+        }
+
+        .popup-box {
+            background: #1a1a1a;
+            border: 2px solid #8bc34a;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 0 30px rgba(139, 195, 74, 0.3);
+        }
+
+        .popup-header {
+            background: #2D5016;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            text-align: center;
+            font-weight: bold;
+            color: #8bc34a;
+        }
+
+        .popup-body {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .popup-footer {
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .popup-footer button {
+            margin: 0;
+            flex: 1;
+        }
+
         /* File upload styling - inline voor zekerheid */
         input[type="file"] {
             display: none;
@@ -97,7 +274,7 @@
     <img src="widm-logo.jpg" alt="Wie is de Mol Logo" class="header-logo">
     <h1>Wie is de Mol?</h1>
     <p class="subtitle">Berlijn Edition</p>
-    <button onclick="toggleSound()" id="sound-toggle" style="position: absolute; top: 20px; right: 20px; background: transparent; border: 2px solid #8bc34a; color: #8bc34a; font-size: 1.5em; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; transition: all 0.3s;">
+    <button onclick="toggleSound()" id="sound-toggle" style="position: absolute; top: 20px; right: 20px; background: transparent; border: 2px solid #8bc34a; color: #8bc34a; font-size: 1.5em; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center;">
         <span id="sound-icon">🔊</span>
     </button>
 </header>
@@ -299,13 +476,43 @@
         function toggleSound() {
             soundEnabled = !soundEnabled;
             localStorage.setItem('widm_sound', soundEnabled);
-            document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+            const icon = document.getElementById('sound-icon');
+            const toggle = document.getElementById('sound-toggle');
+            
+            if (soundEnabled) {
+                icon.textContent = '🔊';
+                toggle.style.background = '#2D5016';
+            } else {
+                icon.textContent = '🔇';
+                toggle.style.background = '#666';
+            }
             
             if (!soundEnabled && huidigeMuziek) {
                 huidigeMuziek.pause();
             } else if (soundEnabled && huidigeMuziek) {
                 huidigeMuziek.play().catch(() => {});
             }
+        }
+        
+        function enableSound() {
+            soundEnabled = true;
+            localStorage.setItem('widm_sound', true);
+            document.getElementById('sound-popup').classList.add('hidden');
+            const icon = document.getElementById('sound-icon');
+            const toggle = document.getElementById('sound-toggle');
+            icon.textContent = '🔊';
+            toggle.style.background = '#2D5016';
+        }
+        
+        function disableSound() {
+            soundEnabled = false;
+            localStorage.setItem('widm_sound', false);
+            document.getElementById('sound-popup').classList.add('hidden');
+            stopMuziek();
+            const icon = document.getElementById('sound-icon');
+            const toggle = document.getElementById('sound-toggle');
+            icon.textContent = '🔇';
+            toggle.style.background = '#666';
         }
         
         function playSound(soundName) {
@@ -355,57 +562,6 @@
         let popupCallback = null;
         let vorigeStatus = null; // Voor detectie status changes (goedkeuring sound)
         
-        // ===== GELUIDSSYSTEEM =====
-        let soundEnabled = localStorage.getItem('widm_sound_enabled');
-        let currentMusic = null;
-
-        function initSound() {
-            // Check if sound preference is set
-            if (soundEnabled === null) {
-                // First time - show popup
-                document.getElementById('sound-popup').classList.remove('hidden');
-            } else {
-                updateSoundUI();
-            }
-
-            // Toggle button click
-            document.getElementById('sound-toggle').addEventListener('click', toggleSound);
-        }
-
-        function enableSound() {
-            soundEnabled = 'true';
-            localStorage.setItem('widm_sound_enabled', 'true');
-            document.getElementById('sound-popup').classList.add('hidden');
-            updateSoundUI();
-        }
-
-        function disableSound() {
-            soundEnabled = 'false';
-            localStorage.setItem('widm_sound_enabled', 'false');
-            document.getElementById('sound-popup').classList.add('hidden');
-            stopAllAudio();
-            updateSoundUI();
-        }
-
-        function toggleSound() {
-            if (soundEnabled === 'true') {
-                disableSound();
-            } else {
-                enableSound();
-            }
-        }
-
-        function updateSoundUI() {
-            const toggle = document.getElementById('sound-toggle');
-            if (soundEnabled === 'true') {
-                toggle.textContent = '🔊';
-                toggle.style.background = '#2D5016';
-            } else {
-                toggle.textContent = '🔇';
-                toggle.style.background = '#666';
-            }
-        }
-
         // ===== EIGEN POPUP =====
         function toonPopup(tekst, metAnnuleer = false, callback = null) {
             popupCallback = callback;
@@ -1164,8 +1320,23 @@
 
         // ===== INITIALISATIE =====
         window.onload = async function() {
-            // Initialiseer geluidssysteem
-            initSound();
+            // Check of sound popup getoond moet worden (eerste keer)
+            const soundPref = localStorage.getItem('widm_sound');
+            if (soundPref === null) {
+                document.getElementById('sound-popup').classList.remove('hidden');
+            } else {
+                // Update UI based on saved preference
+                soundEnabled = soundPref === 'true';
+                const icon = document.getElementById('sound-icon');
+                const toggle = document.getElementById('sound-toggle');
+                if (soundEnabled) {
+                    icon.textContent = '🔊';
+                    toggle.style.background = '#2D5016';
+                } else {
+                    icon.textContent = '🔇';
+                    toggle.style.background = '#666';
+                }
+            }
             
             const urlParams = new URLSearchParams(window.location.search);
             const captainCode = urlParams.get('code');
