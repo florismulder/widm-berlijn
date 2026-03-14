@@ -6,6 +6,7 @@
     <title>Wie is de Mol? - Berlijn</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <style>
         /* File upload styling - inline voor zekerheid */
         input[type="file"] {
@@ -58,6 +59,23 @@
 </head>
 <body>
 
+    <!-- Sound popup -->
+    <div id="sound-popup" class="popup-overlay hidden">
+        <div class="popup-box">
+            <div class="popup-header">
+                <span>🔊 Sound ervaring</span>
+            </div>
+            <div class="popup-body">
+                <p style="margin-bottom: 20px;">Zet sound aan voor de beste WIDM ervaring!</p>
+                <p style="color: #999; font-size: 0.9em;">Je kunt dit later aanpassen met de knop rechtsboven.</p>
+            </div>
+            <div class="popup-footer">
+                <button onclick="enableSound()" style="background: #8bc34a;">🔊 Sound aan</button>
+                <button onclick="disableSound()" style="background: #666; margin-left: 10px;">🔇 Geen sound</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Eigen Popup -->
     <div id="popup-overlay" class="popup-overlay hidden">
         <div class="popup-box">
@@ -79,6 +97,9 @@
     <img src="widm-logo.jpg" alt="Wie is de Mol Logo" class="header-logo">
     <h1>Wie is de Mol?</h1>
     <p class="subtitle">Berlijn Edition</p>
+    <button onclick="toggleSound()" id="sound-toggle" style="position: absolute; top: 20px; right: 20px; background: transparent; border: 2px solid #8bc34a; color: #8bc34a; font-size: 1.5em; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; transition: all 0.3s;">
+        <span id="sound-icon">🔊</span>
+    </button>
 </header>
 
         <!-- Scherm 1: Team Login -->
@@ -261,6 +282,67 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbxtZUrnqR37X_HxUodU7U5AlYwrIhbtA8xgGDvlzqYReY86UrMcqIOvyJ1osRkTX-Alww/exec";
         const SPEL_DUUR = 2 * 60 * 60 * 1000;
 
+        // ===== AUDIO SYSTEEM =====
+        const AUDIO = {
+            wachtMuziek: new Audio('https://drive.google.com/uc?export=download&id=1TzgfbPU8fu7VbNZdOOX8Z89V5BTtDlpT'),
+            stopMuziek: new Audio('https://drive.google.com/uc?export=download&id=1DIel57u8Q3PI4C8Pu-ZLx1hnw8IVKTe7'),
+            goedgekeurd: new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_50d5a90d16.mp3'),
+            afgekeurd: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_12b0c7443c.mp3'),
+            volgendeLocatie: new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_c8d6308c18.mp3'),
+            gpsGedeeld: new Audio('https://cdn.pixabay.com/audio/2022/11/22/audio_31060e28b3.mp3'),
+            spelStart: new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_1fd3725522.mp3')
+        };
+        
+        let huidigeMuziek = null;
+        let soundEnabled = localStorage.getItem('widm_sound') !== 'false';
+        
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('widm_sound', soundEnabled);
+            document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+            
+            if (!soundEnabled && huidigeMuziek) {
+                huidigeMuziek.pause();
+            } else if (soundEnabled && huidigeMuziek) {
+                huidigeMuziek.play().catch(() => {});
+            }
+        }
+        
+        function playSound(soundName) {
+            if (!soundEnabled) return;
+            const sound = AUDIO[soundName];
+            if (sound) {
+                sound.currentTime = 0;
+                sound.volume = 0.5;
+                sound.play().catch(() => {});
+            }
+        }
+        
+        function playMuziek(muziekName) {
+            if (huidigeMuziek) {
+                huidigeMuziek.pause();
+                huidigeMuziek.currentTime = 0;
+            }
+            
+            if (!soundEnabled) return;
+            
+            const muziek = AUDIO[muziekName];
+            if (muziek) {
+                muziek.loop = true;
+                muziek.volume = 0.3;
+                muziek.play().catch(() => {});
+                huidigeMuziek = muziek;
+            }
+        }
+        
+        function stopMuziek() {
+            if (huidigeMuziek) {
+                huidigeMuziek.pause();
+                huidigeMuziek.currentTime = 0;
+                huidigeMuziek = null;
+            }
+        }
+
         // ===== GLOBALE VARIABELEN =====
         let huidigTeamcode = '';
         let alleLeden = [];
@@ -271,6 +353,58 @@
         let spelInterval = null;
         let timerInterval = null;
         let popupCallback = null;
+        let vorigeStatus = null; // Voor detectie status changes (goedkeuring sound)
+        
+        // ===== GELUIDSSYSTEEM =====
+        let soundEnabled = localStorage.getItem('widm_sound_enabled');
+        let currentMusic = null;
+
+        function initSound() {
+            // Check if sound preference is set
+            if (soundEnabled === null) {
+                // First time - show popup
+                document.getElementById('sound-popup').classList.remove('hidden');
+            } else {
+                updateSoundUI();
+            }
+
+            // Toggle button click
+            document.getElementById('sound-toggle').addEventListener('click', toggleSound);
+        }
+
+        function enableSound() {
+            soundEnabled = 'true';
+            localStorage.setItem('widm_sound_enabled', 'true');
+            document.getElementById('sound-popup').classList.add('hidden');
+            updateSoundUI();
+        }
+
+        function disableSound() {
+            soundEnabled = 'false';
+            localStorage.setItem('widm_sound_enabled', 'false');
+            document.getElementById('sound-popup').classList.add('hidden');
+            stopAllAudio();
+            updateSoundUI();
+        }
+
+        function toggleSound() {
+            if (soundEnabled === 'true') {
+                disableSound();
+            } else {
+                enableSound();
+            }
+        }
+
+        function updateSoundUI() {
+            const toggle = document.getElementById('sound-toggle');
+            if (soundEnabled === 'true') {
+                toggle.textContent = '🔊';
+                toggle.style.background = '#2D5016';
+            } else {
+                toggle.textContent = '🔇';
+                toggle.style.background = '#666';
+            }
+        }
 
         // ===== EIGEN POPUP =====
         function toonPopup(tekst, metAnnuleer = false, callback = null) {
@@ -385,6 +519,9 @@
             
             huidigTeamcode = teamcode;
             alleLeden = leden.leden;
+            
+            // Start wachtmuziek
+            playMuziek('wachtMuziek');
             
             // Check of startlocatie al goedgekeurd is
             const startlocatieInfo = await apiCall('getStartlocatieInfo', { teamcode });
@@ -731,6 +868,8 @@
 
         // ===== SPEL =====
         function startSpel() {
+            stopMuziek();
+            playSound('spelStart');
             toonScherm('spel-scherm');
             updateSpelStatus();
             if (spelInterval) clearInterval(spelInterval);
@@ -759,6 +898,9 @@
                 clearInterval(timerInterval);
                 timerInterval = null;
                 // BELANGRIJK: Stop spelInterval NIET, blijf pollen voor hervat detectie
+                
+                // Speel stop muziek
+                playMuziek('stopMuziek');
                 
                 // Toon eindboodschap met reden
                 const redenTekst = data.stopReden ? `<p style="color: #ff9800; font-weight: bold; margin: 20px 0; font-size: 1.2em;">${data.stopReden}</p>` : '';
@@ -822,6 +964,12 @@
                 }
             } else if (data.status === "Goedgekeurd") {
                 // Toon hint sectie - opdracht voltooid, toon hint
+                
+                // Speel goedgekeurd sound alleen bij STATUS CHANGE
+                if (vorigeStatus === "Wachten_op_Goedkeuring") {
+                    playSound('goedgekeurd');
+                }
+                
                 document.getElementById('locatie-opdracht-sectie').classList.remove('hidden');
                 document.getElementById('hint-sectie').classList.remove('hidden');
                 document.getElementById('hint-tekst').textContent = data.hint;
@@ -833,6 +981,9 @@
                 // Toon GPS wacht sectie - GPS gedeeld, wacht op spelleider check (GEEN locatie/opdracht!)
                 document.getElementById('gps-wacht-sectie').classList.remove('hidden');
             }
+            
+            // Update vorige status voor volgende check
+            vorigeStatus = data.status;
         }
 
         function toonBestandsnaam() {
@@ -913,6 +1064,9 @@
             const result = await apiCall('gaNaarVolgendeLocatie', { teamcode }, 'POST');
             
             if (result && result.success) {
+                // Speel spanning sound
+                playSound('volgendeLocatie');
+                
                 // Direct UI updaten naar onderweg modus (sneller dan wachten op API)
                 document.getElementById('locatie-opdracht-sectie').classList.add('hidden');
                 document.getElementById('upload-sectie').classList.add('hidden');
@@ -954,6 +1108,9 @@
                     }, 'POST');
 
                     if (result && result.success) {
+                        // Speel GPS ping sound
+                        playSound('gpsGedeeld');
+                        
                         // Direct UI updaten naar GPS wacht scherm
                         document.getElementById('onderweg-sectie').classList.add('hidden');
                         document.getElementById('gps-wacht-sectie').classList.remove('hidden');
@@ -1007,6 +1164,9 @@
 
         // ===== INITIALISATIE =====
         window.onload = async function() {
+            // Initialiseer geluidssysteem
+            initSound();
+            
             const urlParams = new URLSearchParams(window.location.search);
             const captainCode = urlParams.get('code');
 
@@ -1058,5 +1218,6 @@
             }
         };
     </script>
+
 </body>
 </html>
