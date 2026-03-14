@@ -571,31 +571,6 @@
                 playBeep(sound.freq, sound.duration);
             }
         }
-        
-        function playMuziek(muziekName) {
-            if (huidigeMuziek) {
-                huidigeMuziek.pause();
-                huidigeMuziek.currentTime = 0;
-            }
-            
-            if (!soundEnabled) return;
-            
-            const muziek = AUDIO[muziekName];
-            if (muziek) {
-                muziek.loop = true;
-                muziek.volume = 0.3;
-                muziek.play().catch(() => {});
-                huidigeMuziek = muziek;
-            }
-        }
-        
-        function stopMuziek() {
-            if (huidigeMuziek) {
-                huidigeMuziek.pause();
-                huidigeMuziek.currentTime = 0;
-                huidigeMuziek = null;
-            }
-        }
 
         // ===== GLOBALE VARIABELEN =====
         let huidigTeamcode = '';
