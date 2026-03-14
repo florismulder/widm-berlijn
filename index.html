@@ -452,19 +452,64 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbxtZUrnqR37X_HxUodU7U5AlYwrIhbtA8xgGDvlzqYReY86UrMcqIOvyJ1osRkTX-Alww/exec";
         const SPEL_DUUR = 2 * 60 * 60 * 1000;
 
-        // ===== AUDIO SYSTEEM =====
-        const AUDIO = {
-            wachtMuziek: new Audio('https://drive.google.com/uc?export=download&id=1TzgfbPU8fu7VbNZdOOX8Z89V5BTtDlpT'),
-            stopMuziek: new Audio('https://drive.google.com/uc?export=download&id=1DIel57u8Q3PI4C8Pu-ZLx1hnw8IVKTe7'),
-            goedgekeurd: new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_50d5a90d16.mp3'),
-            afgekeurd: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_12b0c7443c.mp3'),
-            volgendeLocatie: new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_c8d6308c18.mp3'),
-            gpsGedeeld: new Audio('https://cdn.pixabay.com/audio/2022/11/22/audio_31060e28b3.mp3'),
-            spelStart: new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_1fd3725522.mp3')
-        };
-        
-        let huidigeMuziek = null;
+        // ===== AUDIO SYSTEEM - Web Audio API =====
         let soundEnabled = localStorage.getItem('widm_sound') !== 'false';
+        let muziekInterval = null;
+        
+        function playBeep(frequency, duration) {
+            if (!soundEnabled) return;
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log('Audio failed:', e);
+            }
+        }
+        
+        function playMuziek(type) {
+            if (!soundEnabled) return;
+            stopMuziek();
+            
+            if (type === 'wachtMuziek') {
+                // Rustige wacht melodie - herhaal elke 4 seconden
+                const playMelodie = () => {
+                    playBeep(523, 0.3);  // C
+                    setTimeout(() => playBeep(659, 0.3), 400);  // E
+                    setTimeout(() => playBeep(784, 0.3), 800);  // G
+                    setTimeout(() => playBeep(659, 0.3), 1200); // E
+                };
+                playMelodie();
+                muziekInterval = setInterval(playMelodie, 4000);
+            } else if (type === 'stopMuziek') {
+                // Dalende tonen voor stop
+                const playStop = () => {
+                    playBeep(784, 0.4);  // G
+                    setTimeout(() => playBeep(659, 0.4), 500);  // E
+                    setTimeout(() => playBeep(523, 0.6), 1000); // C (lang)
+                };
+                playStop();
+                muziekInterval = setInterval(playStop, 3000);
+            }
+        }
+        
+        function stopMuziek() {
+            if (muziekInterval) {
+                clearInterval(muziekInterval);
+                muziekInterval = null;
+            }
+        }
         
         function toggleSound() {
             soundEnabled = !soundEnabled;
@@ -475,15 +520,11 @@
             if (soundEnabled) {
                 icon.textContent = '🔊';
                 toggle.style.background = '#2D5016';
+                playBeep(880, 0.1);  // Bevestigings beep
             } else {
                 icon.textContent = '🔇';
                 toggle.style.background = '#666';
-            }
-            
-            if (!soundEnabled && huidigeMuziek) {
-                huidigeMuziek.pause();
-            } else if (soundEnabled && huidigeMuziek) {
-                huidigeMuziek.play().catch(() => {});
+                stopMuziek();
             }
         }
         
@@ -517,33 +558,17 @@
         function playSound(soundName) {
             if (!soundEnabled) return;
             
-            // Use Web Audio API for reliable sounds
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                // Different frequencies for different sounds
-                const sounds = {
-                    goedgekeurd: { freq: 880, duration: 0.15 },      // High happy beep
-                    afgekeurd: { freq: 220, duration: 0.3 },         // Low sad beep
-                    volgendeLocatie: { freq: 660, duration: 0.2 },   // Mid beep
-                    gpsGedeeld: { freq: 1200, duration: 0.1 },       // Quick ping
-                    spelStart: { freq: 440, duration: 0.3 }          // Medium beep
-                };
-                
-                const sound = sounds[soundName] || { freq: 440, duration: 0.2 };
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(sound.freq, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + sound.duration);
-                oscillator.start(audioCtx.currentTime);
-                oscillator.stop(audioCtx.currentTime + sound.duration);
-            } catch (e) {
-                console.log('Sound failed:', e);
+            const sounds = {
+                goedgekeurd: { freq: 880, duration: 0.2 },      // Hoog blij
+                afgekeurd: { freq: 220, duration: 0.4 },         // Laag sad  
+                volgendeLocatie: { freq: 660, duration: 0.25 },   // Mid spanning
+                gpsGedeeld: { freq: 1200, duration: 0.15 },       // Quick ping
+                spelStart: { freq: 523, duration: 0.3 }          // C noot
+            };
+            
+            const sound = sounds[soundName];
+            if (sound) {
+                playBeep(sound.freq, sound.duration);
             }
         }
         
