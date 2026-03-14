@@ -452,62 +452,50 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbxtZUrnqR37X_HxUodU7U5AlYwrIhbtA8xgGDvlzqYReY86UrMcqIOvyJ1osRkTX-Alww/exec";
         const SPEL_DUUR = 2 * 60 * 60 * 1000;
 
-        // ===== AUDIO SYSTEEM - Web Audio API =====
+        // ===== AUDIO SYSTEEM - Echte muziek + sound effects =====
         let soundEnabled = localStorage.getItem('widm_sound') !== 'false';
-        let muziekInterval = null;
+        let huidigeMuziek = null;
         
-        function playBeep(frequency, duration) {
-            if (!soundEnabled) return;
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-                
-                oscillator.start(audioCtx.currentTime);
-                oscillator.stop(audioCtx.currentTime + duration);
-            } catch (e) {
-                console.log('Audio failed:', e);
-            }
-        }
+        // WIDM muziek van Google Drive + Mixkit sound effects
+        const AUDIO = {
+            wachtMuziek: new Audio('https://drive.google.com/uc?export=download&id=1TzgfbPU8fu7VbNZdOOX8Z89V5BTtDlpT'),
+            stopMuziek: new Audio('https://drive.google.com/uc?export=download&id=1DIel57u8Q3PI4C8Pu-ZLx1hnw8IVKTe7'),
+            goedgekeurd: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'),
+            afgekeurd: new Audio('https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3'),
+            volgendeLocatie: new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'),
+            gpsGedeeld: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+            spelStart: new Audio('https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3'),
+            countdown: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3')
+        };
         
         function playMuziek(type) {
             if (!soundEnabled) return;
             stopMuziek();
             
-            if (type === 'wachtMuziek') {
-                // Rustige wacht melodie - herhaal elke 4 seconden
-                const playMelodie = () => {
-                    playBeep(523, 0.3);  // C
-                    setTimeout(() => playBeep(659, 0.3), 400);  // E
-                    setTimeout(() => playBeep(784, 0.3), 800);  // G
-                    setTimeout(() => playBeep(659, 0.3), 1200); // E
-                };
-                playMelodie();
-                muziekInterval = setInterval(playMelodie, 4000);
-            } else if (type === 'stopMuziek') {
-                // Dalende tonen voor stop
-                const playStop = () => {
-                    playBeep(784, 0.4);  // G
-                    setTimeout(() => playBeep(659, 0.4), 500);  // E
-                    setTimeout(() => playBeep(523, 0.6), 1000); // C (lang)
-                };
-                playStop();
-                muziekInterval = setInterval(playStop, 3000);
+            const muziek = AUDIO[type];
+            if (muziek) {
+                muziek.loop = true;
+                muziek.volume = 0.3;
+                muziek.play().catch(e => console.log('Muziek play failed:', e));
+                huidigeMuziek = muziek;
             }
         }
         
         function stopMuziek() {
-            if (muziekInterval) {
-                clearInterval(muziekInterval);
-                muziekInterval = null;
+            if (huidigeMuziek) {
+                huidigeMuziek.pause();
+                huidigeMuziek.currentTime = 0;
+                huidigeMuziek = null;
+            }
+        }
+        
+        function playSound(soundName) {
+            if (!soundEnabled) return;
+            const sound = AUDIO[soundName];
+            if (sound) {
+                sound.currentTime = 0;
+                sound.volume = 0.5;
+                sound.play().catch(e => console.log('Sound failed:', e));
             }
         }
         
@@ -520,7 +508,6 @@
             if (soundEnabled) {
                 icon.textContent = '🔊';
                 toggle.style.background = '#2D5016';
-                playBeep(880, 0.1);  // Bevestigings beep
             } else {
                 icon.textContent = '🔇';
                 toggle.style.background = '#666';
@@ -553,23 +540,6 @@
             const toggle = document.getElementById('sound-toggle');
             icon.textContent = '🔇';
             toggle.style.background = '#666';
-        }
-        
-        function playSound(soundName) {
-            if (!soundEnabled) return;
-            
-            const sounds = {
-                goedgekeurd: { freq: 880, duration: 0.2 },      // Hoog blij
-                afgekeurd: { freq: 220, duration: 0.4 },         // Laag sad  
-                volgendeLocatie: { freq: 660, duration: 0.25 },   // Mid spanning
-                gpsGedeeld: { freq: 1200, duration: 0.15 },       // Quick ping
-                spelStart: { freq: 523, duration: 0.3 }          // C noot
-            };
-            
-            const sound = sounds[soundName];
-            if (sound) {
-                playBeep(sound.freq, sound.duration);
-            }
         }
 
         // ===== GLOBALE VARIABELEN =====
@@ -615,21 +585,12 @@
 
         // ===== PIEPJE =====
         function speelPiep() {
-            if (!soundEnabled) return;  // Respect sound setting
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-                oscillator.start(audioCtx.currentTime);
-                oscillator.stop(audioCtx.currentTime + 0.3);
-            } catch(e) {
-                console.log('Audio niet beschikbaar');
+            if (!soundEnabled) return;
+            const sound = AUDIO.countdown;
+            if (sound) {
+                sound.currentTime = 0;
+                sound.volume = 0.5;
+                sound.play().catch(e => console.log('Countdown sound failed:', e));
             }
         }
 
@@ -1086,23 +1047,64 @@
                 // Speel stop muziek
                 playMuziek('stopMuziek');
                 
-                // Toon eindboodschap met reden
-                const redenTekst = data.stopReden ? `<p style="color: #ff9800; font-weight: bold; margin: 20px 0; font-size: 1.2em;">${data.stopReden}</p>` : '';
+                // Check of het definitief gestopt is
+                const isDefinitief = data.stopReden && data.stopReden.includes('definitief');
                 
-                document.getElementById('spel-scherm').innerHTML = `
-                    <div style="text-align: center; padding: 60px 20px;">
-                        <h1 style="font-size: 3em; color: #d32f2f; margin-bottom: 20px;">🛑</h1>
-                        <h2 style="color: #8bc34a; margin-bottom: 20px;">Spel is gestopt</h2>
-                        ${redenTekst}
-                        <p style="color: #e0e0e0; font-size: 1.1em; line-height: 1.8;">
-                            Het spel is beëindigd door de spelleider.<br><br>
-                            Bedankt voor het spelen!
-                        </p>
-                        <p style="color: #666; font-size: 0.9em; margin-top: 30px;">
-                            ⏳ Wachten op spelleider...
-                        </p>
-                    </div>
-                `;
+                if (isDefinitief) {
+                    // DEFINITIEF EINDSCHERM - geen hervat mogelijk
+                    const redenTekst = data.stopReden ? `<p style="color: #ff9800; font-weight: bold; margin: 20px 0; font-size: 1.2em;">${data.stopReden}</p>` : '';
+                    
+                    document.getElementById('spel-scherm').innerHTML = `
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <h1 style="font-size: 4em; margin-bottom: 20px;">🏁</h1>
+                            <h2 style="color: #8bc34a; font-size: 2em; margin-bottom: 30px;">Het spel is afgelopen!</h2>
+                            ${redenTekst}
+                            
+                            <div style="background: #1a3009; padding: 30px; border-radius: 16px; margin: 30px 0; border-left: 5px solid #8bc34a;">
+                                <p style="color: #e0e0e0; font-size: 1.2em; line-height: 1.8; margin-bottom: 20px;">
+                                    Bedankt voor het spelen van<br>
+                                    <strong style="color: #8bc34a; font-size: 1.3em;">Wie is de Mol?</strong><br>
+                                    Berlijn Edition 🇩🇪
+                                </p>
+                                <p style="color: #e0e0e0; font-size: 1.1em; line-height: 1.8;">
+                                    Jullie hebben de rest van de avond vrij!
+                                </p>
+                            </div>
+                            
+                            <div style="background: #1a1a1a; padding: 25px; border-radius: 12px; border: 2px solid #ff9800;">
+                                <p style="color: #ff9800; font-size: 1.1em; font-weight: bold; margin-bottom: 10px;">
+                                    ⏰ Belangrijk:
+                                </p>
+                                <p style="color: #e0e0e0; font-size: 1.1em; line-height: 1.6;">
+                                    Wees om <strong style="color: #8bc34a;">23:00 uur</strong> terug in het hostel.
+                                </p>
+                            </div>
+                            
+                            <p style="color: #8bc34a; font-size: 1.2em; margin-top: 40px;">
+                                Tot zo! 👋
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    // GEWONE STOP - kan hervat worden
+                    const redenTekst = data.stopReden ? `<p style="color: #ff9800; font-weight: bold; margin: 20px 0; font-size: 1.2em;">${data.stopReden}</p>` : '';
+                    
+                    document.getElementById('spel-scherm').innerHTML = `
+                        <div style="text-align: center; padding: 60px 20px;">
+                            <h1 style="font-size: 3em; color: #d32f2f; margin-bottom: 20px;">🛑</h1>
+                            <h2 style="color: #8bc34a; margin-bottom: 20px;">Spel is gestopt</h2>
+                            ${redenTekst}
+                            <p style="color: #e0e0e0; font-size: 1.1em; line-height: 1.8;">
+                                Het spel is beëindigd door de spelleider.<br><br>
+                                Bedankt voor het spelen!
+                            </p>
+                            <p style="color: #666; font-size: 0.9em; margin-top: 30px;">
+                                ⏳ Wachten op spelleider...
+                            </p>
+                        </div>
+                    `;
+                }
+                
                 return;
             }
             
