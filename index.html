@@ -452,14 +452,20 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbxtZUrnqR37X_HxUodU7U5AlYwrIhbtA8xgGDvlzqYReY86UrMcqIOvyJ1osRkTX-Alww/exec";
         const SPEL_DUUR = 2 * 60 * 60 * 1000;
 
-        // ===== AUDIO SYSTEEM - Echte muziek + sound effects =====
+        // ===== AUDIO SYSTEEM - Alle echte MP3's van GitHub =====
         let soundEnabled = localStorage.getItem('widm_sound') !== 'false';
         let huidigeMuziek = null;
         
-        // WIDM muziek van GitHub + simpele beeps voor effects
+        // Alle audio bestanden van GitHub
         const AUDIO = {
             wachtMuziek: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/WIDM_Berlijn_begin.mp3'),
-            stopMuziek: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/WIDM_Berlijn_begin.mp3')
+            stopMuziek: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/WIDM_Berlijn_einde.mp3'),
+            goedgekeurd: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/goedgekeurd.mp3'),
+            afgekeurd: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/afgekeurd.mp3'),
+            volgendeLocatie: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/volgende_locatie.mp3'),
+            gpsGedeeld: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/gps_gedeeld.mp3'),
+            spelStart: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/spel_start.mp3'),
+            countdown: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/countdown.mp3')
         };
         
         function playMuziek(type) {
@@ -485,37 +491,11 @@
         
         function playSound(soundName) {
             if (!soundEnabled) return;
-            // Simpele beeps met Web Audio API - korte effecten die altijd werken
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                // Verschillende tonen per actie
-                const sounds = {
-                    goedgekeurd: 880,    // Hoog blij
-                    afgekeurd: 220,      // Laag sad
-                    volgendeLocatie: 660, // Mid
-                    gpsGedeeld: 1200,    // Ping
-                    spelStart: 523,       // C noot
-                    countdown: 880        // Countdown beep
-                };
-                
-                const freq = sounds[soundName] || 440;
-                const duration = 0.15;
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-                
-                oscillator.start(audioCtx.currentTime);
-                oscillator.stop(audioCtx.currentTime + duration);
-            } catch (e) {
-                console.log('Sound effect failed:', e);
+            const sound = AUDIO[soundName];
+            if (sound) {
+                sound.currentTime = 0;
+                sound.volume = 0.5;
+                sound.play().catch(e => console.log('Sound effect failed:', e));
             }
         }
         
@@ -600,17 +580,6 @@
             if (popupCallback) {
                 popupCallback(false);
                 popupCallback = null;
-            }
-        }
-
-        // ===== PIEPJE =====
-        function speelPiep() {
-            if (!soundEnabled) return;
-            const sound = AUDIO.countdown;
-            if (sound) {
-                sound.currentTime = 0;
-                sound.volume = 0.5;
-                sound.play().catch(e => console.log('Countdown sound failed:', e));
             }
         }
 
@@ -846,12 +815,12 @@
             
             let count = 3;
             document.getElementById('countdown').textContent = count;
-            speelPiep();
+            playSound('countdown');
             
             const timer = setInterval(() => {
                 count--;
                 document.getElementById('countdown').textContent = count;
-                speelPiep();
+                playSound('countdown');
                 
                 if (count === 0) {
                     clearInterval(timer);
@@ -1349,6 +1318,7 @@
 
         // ===== WACHTSCHERM =====
         function toonWachtscherm() {
+            stopMuziek();  // Stop intro muziek
             toonScherm('wacht-op-start-scherm');
             checkSpelGestart();
         }
