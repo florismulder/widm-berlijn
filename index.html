@@ -1028,9 +1028,18 @@
             }
             
             // CHECK: Is het spel gestopt terwijl we aan het spelen waren?
-            if (!data.spelGestart && timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
+            // OF: Is het spel gestopt voordat we begonnen waren?
+            if (!data.spelGestart && (timerInterval || data.stopReden)) {
+                // Zorg dat we in het spel-scherm zijn om de mededeling te tonen
+                const huidigScherm = document.querySelector('.scherm:not(.hidden)');
+                if (huidigScherm && huidigScherm.id !== 'spel-scherm') {
+                    toonScherm('spel-scherm');
+                }
+                
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
                 // BELANGRIJK: Stop spelInterval NIET, blijf pollen voor hervat detectie
                 
                 // Speel stop muziek
