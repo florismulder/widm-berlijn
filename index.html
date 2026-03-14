@@ -235,15 +235,13 @@
     <div id="sound-popup" class="popup-overlay hidden">
         <div class="popup-box">
             <div class="popup-header">
-                <span>🔊 Sound ervaring</span>
+                <span>🔊 SOUND ON</span>
             </div>
             <div class="popup-body">
-                <p style="margin-bottom: 20px;">Zet sound aan voor de beste WIDM ervaring!</p>
-                <p style="color: #999; font-size: 0.9em;">Je kunt dit later aanpassen met de knop rechtsboven.</p>
+                <p style="font-size: 1.3em; font-weight: bold; color: #8bc34a;">Zet sound aan voor de beste ervaring!</p>
             </div>
             <div class="popup-footer">
-                <button onclick="enableSound()" style="background: #8bc34a;">🔊 Sound aan</button>
-                <button onclick="disableSound()" style="background: #666; margin-left: 10px;">🔇 Geen sound</button>
+                <button onclick="enableSound()" style="background: #8bc34a; color: #000;">OK</button>
             </div>
         </div>
     </div>
@@ -497,6 +495,12 @@
             const toggle = document.getElementById('sound-toggle');
             icon.textContent = '🔊';
             toggle.style.background = '#2D5016';
+            
+            // Start wachtmuziek als we ingelogd zijn
+            const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
+            if (teamcode) {
+                playMuziek('wachtMuziek');
+            }
         }
         
         function disableSound() {
@@ -512,11 +516,34 @@
         
         function playSound(soundName) {
             if (!soundEnabled) return;
-            const sound = AUDIO[soundName];
-            if (sound) {
-                sound.currentTime = 0;
-                sound.volume = 0.5;
-                sound.play().catch(() => {});
+            
+            // Use Web Audio API for reliable sounds
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                // Different frequencies for different sounds
+                const sounds = {
+                    goedgekeurd: { freq: 880, duration: 0.15 },      // High happy beep
+                    afgekeurd: { freq: 220, duration: 0.3 },         // Low sad beep
+                    volgendeLocatie: { freq: 660, duration: 0.2 },   // Mid beep
+                    gpsGedeeld: { freq: 1200, duration: 0.1 },       // Quick ping
+                    spelStart: { freq: 440, duration: 0.3 }          // Medium beep
+                };
+                
+                const sound = sounds[soundName] || { freq: 440, duration: 0.2 };
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(sound.freq, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + sound.duration);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + sound.duration);
+            } catch (e) {
+                console.log('Sound failed:', e);
             }
         }
         
@@ -588,6 +615,7 @@
 
         // ===== PIEPJE =====
         function speelPiep() {
+            if (!soundEnabled) return;  // Respect sound setting
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioCtx.createOscillator();
@@ -1022,6 +1050,11 @@
             stopMuziek();
             playSound('spelStart');
             toonScherm('spel-scherm');
+            
+            // Toon loading state
+            document.getElementById('locatie-naam').textContent = 'Laden...';
+            document.getElementById('opdracht-tekst').textContent = 'Opdracht wordt geladen...';
+            
             updateSpelStatus();
             if (spelInterval) clearInterval(spelInterval);
             spelInterval = setInterval(updateSpelStatus, 10000);

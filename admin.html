@@ -30,8 +30,9 @@
                 <div id="spel-gestopt-sectie" style="display:none; background: #1a1a1a; border: 2px solid #d32f2f; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
                     <h3 style="color: #d32f2f; margin: 0 0 15px 0; text-align: center;">🛑 Spel is gestopt</h3>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button onclick="hervatSpel()" style="flex: 1; min-width: 200px; padding: 15px 20px; background: #8bc34a; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">▶️ Hervat spel</button>
-                        <button onclick="bevestigReset()" style="flex: 1; min-width: 200px; padding: 15px 20px; background: #ff9800; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">🔄 Reset spel</button>
+                        <button onclick="hervatSpel()" style="flex: 1; min-width: 180px; padding: 15px 20px; background: #8bc34a; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">▶️ Hervat</button>
+                        <button onclick="bevestigDefinitief()" style="flex: 1; min-width: 180px; padding: 15px 20px; background: #d32f2f; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;">🏁 Definitief stop</button>
+                        <button onclick="bevestigReset()" style="flex: 1; min-width: 180px; padding: 15px 20px; background: #ff9800; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">🔄 Reset</button>
                     </div>
                 </div>
                 <div id="dashboard-timer" class="dashboard-timer">
@@ -125,6 +126,28 @@
             </div>
             <div class="popup-footer">
                 <button onclick="sluitResetPopup()" style="background: #8bc34a; color: #000;">Begrepen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Definitief stop popup -->
+    <div id="definitief-overlay" class="popup-overlay hidden">
+        <div class="popup-box">
+            <div class="popup-header" style="background: #d32f2f; color: #fff;">
+                <span>🏁 Spel definitief beëindigen</span>
+            </div>
+            <div class="popup-body">
+                <p style="margin-bottom: 20px; font-size: 1.1em;">Weet je zeker dat je het spel wilt beëindigen?</p>
+                <p style="color: #ff9800; margin-bottom: 15px;">⚠️ Teams kunnen daarna NIET meer hervatten!</p>
+                <p style="color: #e0e0e0; line-height: 1.6;">
+                    Teams zien een eindscherm met de melding dat het spel is afgelopen.
+                    <br><br>
+                    Om opnieuw te beginnen moet je het spel volledig resetten.
+                </p>
+            </div>
+            <div class="popup-footer">
+                <button onclick="definitiefStopSpel()" style="background: #d32f2f; color: #fff;">🏁 Ja, beëindig definitief</button>
+                <button onclick="sluitDefinitiefPopup()" style="background: #666; color: #fff; margin-left: 10px;">Annuleer</button>
             </div>
         </div>
     </div>
@@ -257,6 +280,37 @@
 
         function sluitResetPopup() {
             document.getElementById('reset-overlay').classList.add('hidden');
+        }
+
+        function bevestigDefinitief() {
+            document.getElementById('definitief-overlay').classList.remove('hidden');
+        }
+
+        function sluitDefinitiefPopup() {
+            document.getElementById('definitief-overlay').classList.add('hidden');
+        }
+
+        async function definitiefStopSpel() {
+            document.getElementById('definitief-overlay').classList.add('hidden');
+            
+            const result = await apiCall('stopSpel', {
+                reden: '🏁 Spel is definitief beëindigd door spelleider'
+            }, 'POST');
+            
+            if (result && result.success) {
+                // Verberg hervat knop door gestopt sectie te updaten
+                const gestoptSectie = document.getElementById('spel-gestopt-sectie');
+                gestoptSectie.innerHTML = `
+                    <h3 style="color: #d32f2f; margin: 0 0 15px 0; text-align: center;">🏁 Spel is definitief beëindigd</h3>
+                    <p style="text-align: center; color: #e0e0e0; margin-bottom: 15px;">Teams kunnen niet meer hervatten.</p>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button onclick="bevestigReset()" style="padding: 15px 30px; background: #ff9800; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">🔄 Reset spel</button>
+                    </div>
+                `;
+                updateDashboard();
+            } else {
+                alert('❌ Fout bij definitief stoppen. Probeer opnieuw.');
+            }
         }
 
         function startDashboardTimer(startDatum) {
