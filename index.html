@@ -799,6 +799,7 @@
                 } else if (startlocatieInfo.status === 'Wachten_op_Startlocatie_Upload') {
                     // Afgekeurd! Toon upload sectie opnieuw met waarschuwing
                     clearInterval(startlocatieCheckInterval);
+                    playSound('afgekeurd');  // Speel afgekeurd sound
                     document.getElementById('startlocatie-wacht-sectie').classList.add('hidden');
                     document.getElementById('startlocatie-upload-sectie').classList.remove('hidden');
                     toonPopup('❌ Foto afgekeurd door spelleider! Upload opnieuw een foto met de locatie EN alle teamleden duidelijk in beeld.');
@@ -1019,21 +1020,9 @@
 
         // ===== SPEL =====
         function startSpel() {
-            // Stop ALLE audio eerst
-            stopMuziek();
-            
-            // Forceer stop van alle AUDIO objecten
-            Object.values(AUDIO).forEach(audio => {
-                if (audio && audio.pause) {
-                    audio.pause();
-                    audio.currentTime = 0;
-                }
-            });
-            
-            // Wacht 500ms om zeker te zijn dat alles gestopt is
-            setTimeout(() => {
-                playSound('spelStart');
-            }, 500);
+            // Muziek is al gestopt in checkSpelGestart
+            // Speel start sound DIRECT (zonder delay)
+            playSound('spelStart');
             
             toonScherm('spel-scherm');
             
@@ -1169,6 +1158,12 @@
             
             // Show correct section based on status
             if (data.status === "Wachten_op_Upload") {
+                // Check of foto net is afgekeurd (status change)
+                if (vorigeStatus === "Wachten_op_Goedkeuring") {
+                    playSound('afgekeurd');
+                    toonPopup('❌ Foto afgekeurd! Upload opnieuw een betere foto.');
+                }
+                
                 // Toon upload sectie - opdracht zichtbaar
                 document.getElementById('locatie-opdracht-sectie').classList.remove('hidden');
                 document.getElementById('upload-sectie').classList.remove('hidden');
@@ -1379,7 +1374,12 @@
                 
                 if (data && data.spelGestart) {
                     clearInterval(checkInterval);
-                    startSpel();
+                    stopMuziek();  // Stop wacht muziek VOOR startSpel
+                    
+                    // Kleine delay om muziek echt te stoppen
+                    setTimeout(() => {
+                        startSpel();
+                    }, 300);
                 }
             }, 5000); // Check elke 5 seconden
         }
@@ -1407,6 +1407,7 @@
                         // Check of spel al gestart is
                         const spelData = await apiCall('getSpelData', { teamcode: huidigTeamcode });
                         if (spelData && spelData.spelGestart) {
+                            stopMuziek();  // Stop muziek voor de zekerheid
                             startSpel();
                         } else {
                             toonWachtscherm();
@@ -1422,6 +1423,7 @@
                         // Andere status, check of spel al gestart is
                         const spelData = await apiCall('getSpelData', { teamcode: huidigTeamcode });
                         if (spelData && spelData.spelGestart) {
+                            stopMuziek();  // Stop muziek voor de zekerheid
                             startSpel();
                         } else {
                             toonWachtscherm();
