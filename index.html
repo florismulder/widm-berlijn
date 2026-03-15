@@ -476,7 +476,12 @@
             const muziek = AUDIO[type];
             if (muziek) {
                 muziek.loop = true;
-                muziek.volume = 0.3;
+                // Verschillende volumes per muziek type
+                if (type === 'stopMuziek') {
+                    muziek.volume = 0.6;  // Einde muziek harder
+                } else {
+                    muziek.volume = 0.3;  // Wacht muziek en intro normaal
+                }
                 muziek.play().catch(e => console.log('Muziek play failed:', e));
                 huidigeMuziek = muziek;
             }
@@ -495,14 +500,21 @@
             const sound = AUDIO[soundName];
             if (sound) {
                 sound.currentTime = 0;
-                sound.volume = 0.5;
+                // Verschillende volumes per sound type
+                if (soundName === 'countdown') {
+                    sound.volume = 0.8;  // Countdown harder
+                } else if (soundName === 'spelStart') {
+                    sound.volume = 0.7;  // Start sound ook iets harder
+                } else {
+                    sound.volume = 0.5;  // Andere sounds normaal
+                }
                 sound.play().catch(e => console.log('Sound effect failed:', e));
             }
         }
         
         function toggleSound() {
             soundEnabled = !soundEnabled;
-            localStorage.setItem('widm_sound', soundEnabled);
+            localStorage.setItem('widm_sound', soundEnabled.toString());
             const icon = document.getElementById('sound-icon');
             const toggle = document.getElementById('sound-toggle');
             
@@ -518,7 +530,7 @@
         
         function enableSound() {
             soundEnabled = true;
-            localStorage.setItem('widm_sound', true);
+            localStorage.setItem('widm_sound', 'true');
             document.getElementById('sound-popup').classList.add('hidden');
             const icon = document.getElementById('sound-icon');
             const toggle = document.getElementById('sound-toggle');
@@ -534,7 +546,7 @@
         
         function disableSound() {
             soundEnabled = false;
-            localStorage.setItem('widm_sound', false);
+            localStorage.setItem('widm_sound', 'false');
             document.getElementById('sound-popup').classList.add('hidden');
             stopMuziek();
             const icon = document.getElementById('sound-icon');
@@ -781,6 +793,7 @@
                 if (startlocatieInfo.status === 'Startlocatie_Goedgekeurd') {
                     // Goedgekeurd! Ga naar rollen verdelen
                     clearInterval(startlocatieCheckInterval);
+                    playSound('goedgekeurd');  // Speel goedgekeurd sound!
                     overgeblevenLeden = [...alleLeden];
                     toonRollenScherm();
                 } else if (startlocatieInfo.status === 'Wachten_op_Startlocatie_Upload') {
@@ -1006,12 +1019,21 @@
 
         // ===== SPEL =====
         function startSpel() {
+            // Stop ALLE audio eerst
             stopMuziek();
             
-            // Kleine delay om zeker te zijn dat muziek gestopt is voordat sound speelt
+            // Forceer stop van alle AUDIO objecten
+            Object.values(AUDIO).forEach(audio => {
+                if (audio && audio.pause) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+            });
+            
+            // Wacht 500ms om zeker te zijn dat alles gestopt is
             setTimeout(() => {
                 playSound('spelStart');
-            }, 200);
+            }, 500);
             
             toonScherm('spel-scherm');
             
