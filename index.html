@@ -598,6 +598,7 @@
         let timerInterval = null;
         let spelCheckInterval = null; // Guard voor checkSpelGestart interval
         let spelWasGestopt = false;   // Vlag voor hervat-detectie na stopscherm
+        let spelSchermsHTML = null;   // Originele spel-scherm HTML voor herstel bij hervat
         let popupCallback = null;
         let vorigeStatus = null; // Voor detectie status changes (goedkeuring sound)
         
@@ -868,6 +869,8 @@
         function startPrivacyCheck(naam) {
             huidigeLid = naam;
             document.getElementById('privacy-naam').textContent = naam;
+            // Reset rode achtergrond van vorige ronde
+            document.getElementById('privacy-scherm').style.background = '';
             toonScherm('privacy-scherm');
             
             let count = 5;
@@ -880,9 +883,9 @@
                 
                 if (count === 0) {
                     clearInterval(timer);
-                    // Scherm rood maken — blijft zo tot toonRol() naar rol-scherm switcht
+                    // Scherm rood — blijft precies 1 seconde (zelfde als andere cijfers), dan toonRol
                     document.getElementById('privacy-scherm').style.background = '#8b0000';
-                    toonRol();
+                    setTimeout(() => toonRol(), 1000);
                 } else {
                     playSound('countdown');
                 }
@@ -1056,13 +1059,21 @@
 
         // ===== SPEL =====
         function startSpel() {
-            // Muziek is al gestopt in checkSpelGestart
-            // Speel start sound DIRECT (zonder delay)
-            playSound('spelStart');
+            // Herstel originele spel-scherm HTML als die overschreven was (hervat na stop)
+            if (spelSchermsHTML) {
+                document.getElementById('spel-scherm').innerHTML = spelSchermsHTML;
+            }
+            // Sla originele HTML op voor toekomstig herstel (alleen eerste keer)
+            if (!spelSchermsHTML) {
+                spelSchermsHTML = document.getElementById('spel-scherm').innerHTML;
+            }
             
+            spelWasGestopt = false;
+            vorigeStatus = null;
+            
+            playSound('spelStart');
             toonScherm('spel-scherm');
             
-            // Toon loading state
             document.getElementById('locatie-naam').textContent = 'Laden...';
             document.getElementById('opdracht-tekst').textContent = 'Opdracht wordt geladen...';
             
@@ -1082,9 +1093,11 @@
                 return;
             }
 
-            // CHECK EERST: Is het spel hervat na een stop? Dan pagina herladen.
+            // CHECK EERST: Is het spel hervat na een stop? Direct herstarten zonder reload.
             if (data.spelGestart && spelWasGestopt) {
-                location.reload();
+                stopMuziek();
+                if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+                startSpel();
                 return;
             }
 
@@ -1427,15 +1440,20 @@
                 if (data && data.spelGestart) {
                     clearInterval(spelCheckInterval);
                     spelCheckInterval = null;
-                    stopMuziek();  // Stop wacht muziek VOOR startSpel
+                    stopMuziek();
                     
-                    // Force stop ALLE audio objecten (niet alleen huidigeMuziek)
-                    Object.values(AUDIO).forEach(a => { a.pause(); a.currentTime = 0; });
+                    // Force stop alle muziek audio — maar NIET spelStart
+                    Object.entries(AUDIO).forEach(([key, a]) => {
+                        if (key !== 'spelStart') { a.pause(); a.currentTime = 0; }
+                    });
                     
-                    // 500ms delay zodat audio zeker gestopt is voor startSpel
+                    // Maak een verse spelStart instantie zodat force-stop hem niet blokkeert
+                    AUDIO.spelStart = new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/spel_start.mp3');
+                    AUDIO.spelStart.volume = 0.7;
+                    
                     setTimeout(() => {
                         startSpel();
-                    }, 500);
+                    }, 300);
                 }
             }, 5000); // Check elke 5 seconden
         }
