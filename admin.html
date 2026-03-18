@@ -209,8 +209,10 @@
 
         function bevestigStop() {
             document.getElementById('stop-overlay').classList.remove('hidden');
-            
-            // Toon/verberg custom reden veld
+        }
+
+        // Change listener eenmalig instellen (niet bij elke klik opnieuw)
+        document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('stop-reden').addEventListener('change', function() {
                 if (this.value === 'Anders') {
                     document.getElementById('stop-reden-custom').style.display = 'block';
@@ -218,7 +220,7 @@
                     document.getElementById('stop-reden-custom').style.display = 'none';
                 }
             });
-        }
+        });
 
         function sluitStopPopup() {
             document.getElementById('stop-overlay').classList.add('hidden');
@@ -496,6 +498,7 @@
                             <p style="color: #999; font-size: 0.85em; margin: 10px 0;">Lat: ${team.gpsLatitude}, Lng: ${team.gpsLongitude}</p>
                             <div class="actie-knoppen">
                                 <button onclick="keurLocatieGoed('${team.teamcode}')" class="btn-goedkeuren">✅ Locatie goedkeuren</button>
+                                <button onclick="keurLocatieAf('${team.teamcode}')" class="btn-afkeuren">❌ Locatie afkeuren</button>
                             </div>
                         </div>
                     `;
@@ -582,6 +585,16 @@
                 updateDashboard();
             } else {
                 toonToast('Fout bij goedkeuren locatie. Probeer opnieuw.', 'error');
+            }
+        }
+
+        async function keurLocatieAf(teamcode) {
+            const result = await apiCall('keurLocatieAf', { teamcode }, 'POST');
+            if (result && result.success) {
+                toonToast('GPS locatie afgekeurd. Team moet opnieuw GPS delen.', 'warning');
+                updateDashboard();
+            } else {
+                toonToast('Fout bij afkeuren locatie. Probeer opnieuw.', 'error');
             }
         }
 

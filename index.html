@@ -475,7 +475,8 @@
             
             const muziek = AUDIO[type];
             if (muziek) {
-                muziek.loop = true;
+                // Intro muziek (na login) speelt maar één keer; wacht- en eindmuziek loopen
+                muziek.loop = (type !== 'wachtMuziek');
                 // Verschillende volumes per muziek type
                 if (type === 'stopMuziek') {
                     muziek.volume = 0.6;  // Einde muziek harder
@@ -564,6 +565,7 @@
         let huidigeCaptainCode = '';
         let spelInterval = null;
         let timerInterval = null;
+        let spelCheckInterval = null; // Guard voor checkSpelGestart interval
         let popupCallback = null;
         let vorigeStatus = null; // Voor detectie status changes (goedkeuring sound)
         
@@ -836,19 +838,24 @@
             document.getElementById('privacy-naam').textContent = naam;
             toonScherm('privacy-scherm');
             
-            let count = 3;
+            let count = 5;
             document.getElementById('countdown').textContent = count;
             playSound('countdown');
             
             const timer = setInterval(() => {
                 count--;
                 document.getElementById('countdown').textContent = count;
-                playSound('countdown');
                 
                 if (count === 0) {
                     clearInterval(timer);
-                    // Direct naar rol zonder 0 te tonen
-                    toonRol();
+                    // Scherm even rood flashen bij 0
+                    document.getElementById('privacy-scherm').style.background = '#8b0000';
+                    setTimeout(() => {
+                        document.getElementById('privacy-scherm').style.background = '';
+                        toonRol();
+                    }, 600);
+                } else {
+                    playSound('countdown');
                 }
             }, 1000);
         }
@@ -1323,6 +1330,9 @@
                     }, 'POST');
 
                     if (result && result.success) {
+                        // Sluit de "GPS ophalen..." popup
+                        sluitPopup();
+                        
                         // Speel GPS ping sound
                         playSound('gpsGedeeld');
                         
@@ -1365,7 +1375,9 @@
         }
 
         function checkSpelGestart() {
-            const checkInterval = setInterval(async () => {
+            if (spelCheckInterval) clearInterval(spelCheckInterval); // Voorkom dubbele intervals
+            
+            spelCheckInterval = setInterval(async () => {
                 const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
                 const data = await apiCall('getSpelData', { teamcode });
                 
@@ -1373,13 +1385,17 @@
                     'Laatst gecheckt: ' + new Date().toLocaleTimeString('nl-NL');
                 
                 if (data && data.spelGestart) {
-                    clearInterval(checkInterval);
+                    clearInterval(spelCheckInterval);
+                    spelCheckInterval = null;
                     stopMuziek();  // Stop wacht muziek VOOR startSpel
                     
-                    // Kleine delay om muziek echt te stoppen
+                    // Force stop ALLE audio objecten (niet alleen huidigeMuziek)
+                    Object.values(AUDIO).forEach(a => { a.pause(); a.currentTime = 0; });
+                    
+                    // 500ms delay zodat audio zeker gestopt is voor startSpel
                     setTimeout(() => {
                         startSpel();
-                    }, 300);
+                    }, 500);
                 }
             }, 5000); // Check elke 5 seconden
         }
