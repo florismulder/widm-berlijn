@@ -435,6 +435,7 @@
                     <h3 style="color: #8bc34a; margin-bottom: 20px;">🗺️ Onderweg naar volgende locatie</h3>
                     <p style="color: #e0e0e0; margin-bottom: 20px;">Dit is nog een keer de hint:</p>
                     <p id="onderweg-hint" class="hint-text" style="font-size: 1.1em; line-height: 1.7;"></p>
+                    <p id="locatie-afkeur-opmerking" class="hidden" style="margin-top: 15px; padding: 12px 15px; background: #3a1a00; border-left: 4px solid #ff9800; border-radius: 6px; color: #ff9800; font-size: 0.95em;"></p>
                     <button onclick="deelLocatie()" class="success-btn" style="margin-top: 30px;">📍 Klik hier als jullie er zijn</button>
                 </div>
             </div>
@@ -455,6 +456,7 @@
         // ===== AUDIO SYSTEEM - Alle echte MP3's van GitHub =====
         let soundEnabled = localStorage.getItem('widm_sound') !== 'false';
         let huidigeMuziek = null;
+        let huidigMuziekType = null; // Bijhouden welk muziektype actief is (ook bij pauze)
         
         // Alle audio bestanden van GitHub
         const AUDIO = {
@@ -471,24 +473,24 @@
         
         function playMuziek(type) {
             if (!soundEnabled) return;
-            stopMuziek();
+            // Al bezig met dit type? Niet opnieuw starten (voorkomt reset van eindmuziek elke 10s)
+            if (huidigMuziekType === type && huidigeMuziek && !huidigeMuziek.paused) return;
+            
+            stopMuziekAudio(); // Stop alleen audio, bewaar type niet
+            huidigMuziekType = type;
             
             const muziek = AUDIO[type];
             if (muziek) {
-                // Intro muziek (na login) speelt maar één keer; wacht- en eindmuziek loopen
+                // Intro muziek speelt één keer; wacht- en eindmuziek loopen
                 muziek.loop = (type !== 'wachtMuziek');
-                // Verschillende volumes per muziek type
-                if (type === 'stopMuziek') {
-                    muziek.volume = 0.6;  // Einde muziek harder
-                } else {
-                    muziek.volume = 0.3;  // Wacht muziek en intro normaal
-                }
+                muziek.volume = (type === 'stopMuziek') ? 0.6 : 0.3;
                 muziek.play().catch(e => console.log('Muziek play failed:', e));
                 huidigeMuziek = muziek;
             }
         }
         
-        function stopMuziek() {
+        // Stopt alleen de audio, bewaart huidigMuziekType voor toggle-herstel
+        function stopMuziekAudio() {
             if (huidigeMuziek) {
                 huidigeMuziek.pause();
                 huidigeMuziek.currentTime = 0;
@@ -496,20 +498,32 @@
             }
         }
         
+        // Volledig stoppen incl. type reset (bij schermwissels)
+        function stopMuziek() {
+            stopMuziekAudio();
+            huidigMuziekType = null;
+        }
+        
         function playSound(soundName) {
             if (!soundEnabled) return;
             const sound = AUDIO[soundName];
             if (sound) {
+                sound.loop = false; // Sound effects nooit loopen
                 sound.currentTime = 0;
-                // Verschillende volumes per sound type
                 if (soundName === 'countdown') {
-                    sound.volume = 0.8;  // Countdown harder
+                    sound.volume = 0.8;
                 } else if (soundName === 'spelStart') {
-                    sound.volume = 0.7;  // Start sound ook iets harder
+                    sound.volume = 0.7;
                 } else {
-                    sound.volume = 0.5;  // Andere sounds normaal
+                    sound.volume = 0.5;
                 }
-                sound.play().catch(e => console.log('Sound effect failed:', e));
+                // Speel met retry bij autoplay-blokkering
+                const playPromise = sound.play();
+                if (playPromise) {
+                    playPromise.catch(() => {
+                        setTimeout(() => sound.play().catch(() => {}), 300);
+                    });
+                }
             }
         }
         
@@ -522,10 +536,20 @@
             if (soundEnabled) {
                 icon.textContent = '🔊';
                 toggle.style.background = '#2D5016';
+                // Herstart muziek van het bewaarde type
+                if (huidigMuziekType) {
+                    const type = huidigMuziekType;
+                    huidigMuziekType = null; // Reset zodat playMuziek niet skip
+                    playMuziek(type);
+                }
             } else {
                 icon.textContent = '🔇';
                 toggle.style.background = '#666';
-                stopMuziek();
+                // Pauze alleen — bewaar huidigMuziekType voor herstel
+                if (huidigeMuziek) {
+                    huidigeMuziek.pause();
+                    huidigeMuziek = null;
+                }
             }
         }
         
@@ -538,10 +562,17 @@
             icon.textContent = '🔊';
             toggle.style.background = '#2D5016';
             
-            // Start wachtmuziek als we ingelogd zijn
+            // Prime alle audio objecten zodat spelStart later betrouwbaar speelt
+            Object.values(AUDIO).forEach(a => {
+                a.volume = 0;
+                a.play().catch(() => {});
+                setTimeout(() => { a.pause(); a.currentTime = 0; }, 200);
+            });
+            
+            // Start intro muziek als we ingelogd zijn
             const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
             if (teamcode) {
-                playMuziek('wachtMuziek');
+                setTimeout(() => playMuziek('wachtMuziek'), 250);
             }
         }
         
@@ -566,6 +597,7 @@
         let spelInterval = null;
         let timerInterval = null;
         let spelCheckInterval = null; // Guard voor checkSpelGestart interval
+        let spelWasGestopt = false;   // Vlag voor hervat-detectie na stopscherm
         let popupCallback = null;
         let vorigeStatus = null; // Voor detectie status changes (goedkeuring sound)
         
@@ -848,12 +880,9 @@
                 
                 if (count === 0) {
                     clearInterval(timer);
-                    // Scherm even rood flashen bij 0
+                    // Scherm rood maken — blijft zo tot toonRol() naar rol-scherm switcht
                     document.getElementById('privacy-scherm').style.background = '#8b0000';
-                    setTimeout(() => {
-                        document.getElementById('privacy-scherm').style.background = '';
-                        toonRol();
-                    }, 600);
+                    toonRol();
                 } else {
                     playSound('countdown');
                 }
@@ -1053,16 +1082,20 @@
                 return;
             }
 
+            // CHECK EERST: Is het spel hervat na een stop? Dan pagina herladen.
+            if (data.spelGestart && spelWasGestopt) {
+                location.reload();
+                return;
+            }
+
             // Start timer als spel is gestart
             if (data.spelGestart && data.startTijd && !timerInterval) {
                 const startDatum = new Date(data.startTijd).getTime();
                 startSpelTimer(startDatum);
             }
             
-            // CHECK: Is het spel gestopt terwijl we aan het spelen waren?
-            // OF: Is het spel gestopt voordat we begonnen waren?
+            // CHECK: Is het spel gestopt?
             if (!data.spelGestart && (timerInterval || data.stopReden)) {
-                // Zorg dat we in het spel-scherm zijn om de mededeling te tonen
                 const huidigScherm = document.querySelector('.scherm:not(.hidden)');
                 if (huidigScherm && huidigScherm.id !== 'spel-scherm') {
                     toonScherm('spel-scherm');
@@ -1072,12 +1105,12 @@
                     clearInterval(timerInterval);
                     timerInterval = null;
                 }
-                // BELANGRIJK: Stop spelInterval NIET, blijf pollen voor hervat detectie
                 
-                // Speel stop muziek
+                spelWasGestopt = true; // Markeer dat spel gestopt is voor hervat-detectie
+                
+                // Speel stop muziek — alleen als nog niet bezig
                 playMuziek('stopMuziek');
                 
-                // Check of het definitief gestopt is
                 const isDefinitief = data.stopReden && data.stopReden.includes('definitief');
                 
                 if (isDefinitief) {
@@ -1138,13 +1171,6 @@
                 return;
             }
             
-            // CHECK: Is het spel hervat na stoppen?
-            if (data.spelGestart && !timerInterval && data.startTijd) {
-                // Spel is hervat! Reload de pagina voor een frisse start
-                location.reload();
-                return;
-            }
-            
             // Update locatie en opdracht ALLEEN als status dat toestaat
             // Verberg tijdens Op_weg en Wachten_op_Locatie_Check
             if (data.status === 'Op_weg' || data.status === 'Wachten_op_Locatie_Check') {
@@ -1196,9 +1222,17 @@
                 document.getElementById('hint-sectie').classList.remove('hidden');
                 document.getElementById('hint-tekst').textContent = data.hint;
             } else if (data.status === "Op_weg") {
-                // Toon onderweg sectie - team is onderweg naar locatie (GEEN locatie/opdracht!)
+                // Toon onderweg sectie
                 document.getElementById('onderweg-sectie').classList.remove('hidden');
                 document.getElementById('onderweg-hint').textContent = data.hint;
+                // Toon opmerking spelleider als die er is
+                const opmerkingEl = document.getElementById('locatie-afkeur-opmerking');
+                if (data.locatieAfkeurOpmerking) {
+                    opmerkingEl.textContent = '💬 Spelleider: ' + data.locatieAfkeurOpmerking;
+                    opmerkingEl.classList.remove('hidden');
+                } else {
+                    opmerkingEl.classList.add('hidden');
+                }
             } else if (data.status === "Wachten_op_Locatie_Check") {
                 // Toon GPS wacht sectie - GPS gedeeld, wacht op spelleider check (GEEN locatie/opdracht!)
                 document.getElementById('gps-wacht-sectie').classList.remove('hidden');
@@ -1280,6 +1314,10 @@
         async function naarVolgendeLocatie() {
             const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
             
+            // Disable knop om dubbele aanroepen te voorkomen
+            const btn = document.querySelector('#hint-sectie .success-btn');
+            if (btn) btn.disabled = true;
+            
             // Haal de huidige hint op (die we net hebben gezien)
             const huidigeHint = document.getElementById('hint-tekst').textContent;
             
@@ -1289,7 +1327,7 @@
                 // Speel spanning sound
                 playSound('volgendeLocatie');
                 
-                // Direct UI updaten naar onderweg modus (sneller dan wachten op API)
+                // Direct UI updaten naar onderweg modus
                 document.getElementById('locatie-opdracht-sectie').classList.add('hidden');
                 document.getElementById('upload-sectie').classList.add('hidden');
                 document.getElementById('wacht-sectie').classList.add('hidden');
@@ -1297,14 +1335,16 @@
                 document.getElementById('onderweg-sectie').classList.remove('hidden');
                 document.getElementById('gps-wacht-sectie').classList.add('hidden');
                 
-                // Toon de hint DIRECT (zonder te wachten op updateSpelStatus)
+                // Toon de hint DIRECT
                 document.getElementById('onderweg-hint').textContent = huidigeHint;
                 
-                // Dan data ophalen van backend
-                updateSpelStatus();
+                // Wacht 2s voor backend verwerking, dan pas synchen
+                setTimeout(updateSpelStatus, 2000);
             } else if (result && result.error) {
+                if (btn) btn.disabled = false;
                 toonPopup('Fout: ' + result.error);
             } else {
+                if (btn) btn.disabled = false;
                 toonPopup('Fout bij naar volgende locatie gaan. Probeer opnieuw.');
             }
         }

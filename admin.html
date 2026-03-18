@@ -498,8 +498,9 @@
                             <p style="color: #999; font-size: 0.85em; margin: 10px 0;">Lat: ${team.gpsLatitude}, Lng: ${team.gpsLongitude}</p>
                             <div class="actie-knoppen">
                                 <button onclick="keurLocatieGoed('${team.teamcode}')" class="btn-goedkeuren">✅ Locatie goedkeuren</button>
-                                <button onclick="keurLocatieAf('${team.teamcode}')" class="btn-afkeuren">❌ Locatie afkeuren</button>
+                                <button onclick="keurLocatieAfMetOpmerking('${team.teamcode}')" class="btn-afkeuren">❌ Locatie afkeuren</button>
                             </div>
+                            <input type="text" id="opmerking-${team.teamcode}" placeholder="Optioneel bericht aan team bij afkeuren..." style="width:100%; margin-top:10px; padding:10px; background:#1a1a1a; border:1px solid #555; border-radius:6px; color:#e0e0e0; font-size:0.9em;">
                         </div>
                     `;
                 } else if (team.status === 'Wachten_op_Goedkeuring' && team.fotoUrl) {
@@ -527,6 +528,7 @@
                         <div class="locatie-info">
                             <strong>📍 Locatie:</strong> ${team.huidigeLocatie || 'Nog niet gestart'}
                         </div>
+                        ${team.huidigeOpdracht ? `<div class="locatie-info" style="color: #aaa; font-size: 0.9em;"><strong>📋 Opdracht:</strong> ${team.huidigeOpdracht}</div>` : ''}
                         <div class="status-sectie">
                             <span class="status-badge ${statusClass}">${statusTekst}</span>
                         </div>
@@ -588,14 +590,20 @@
             }
         }
 
-        async function keurLocatieAf(teamcode) {
-            const result = await apiCall('keurLocatieAf', { teamcode }, 'POST');
+        async function keurLocatieAf(teamcode, opmerking = '') {
+            const result = await apiCall('keurLocatieAf', { teamcode, opmerking }, 'POST');
             if (result && result.success) {
                 toonToast('GPS locatie afgekeurd. Team moet opnieuw GPS delen.', 'warning');
                 updateDashboard();
             } else {
                 toonToast('Fout bij afkeuren locatie. Probeer opnieuw.', 'error');
             }
+        }
+
+        async function keurLocatieAfMetOpmerking(teamcode) {
+            const invoer = document.getElementById('opmerking-' + teamcode);
+            const opmerking = invoer ? invoer.value.trim() : '';
+            await keurLocatieAf(teamcode, opmerking);
         }
 
         // Start dashboard updates
