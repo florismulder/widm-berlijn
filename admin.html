@@ -31,7 +31,6 @@
                     <h3 style="color: #d32f2f; margin: 0 0 15px 0; text-align: center;">🛑 Spel is gestopt</h3>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button onclick="hervatSpel()" style="flex: 1; min-width: 180px; padding: 15px 20px; background: #8bc34a; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">▶️ Hervat</button>
-                        <button onclick="bevestigDefinitief()" style="flex: 1; min-width: 180px; padding: 15px 20px; background: #d32f2f; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;">🏁 Definitief stop</button>
                         <button onclick="bevestigReset()" style="flex: 1; min-width: 180px; padding: 15px 20px; background: #ff9800; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">🔄 Reset</button>
                     </div>
                 </div>
@@ -78,6 +77,9 @@
                     <option value="Technische problemen">🔧 Technische problemen</option>
                     <option value="Anders">📝 Anders...</option>
                 </select>
+                <div id="stop-reden-winnaar" style="margin-top: 10px;">
+                    <input type="text" id="stop-reden-winnaar-naam" placeholder="Welk team heeft gewonnen? (bijv. ALPHA)" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #8bc34a; background: #1a1a1a; color: #e0e0e0; font-size: 1em;">
+                </div>
                 <div id="stop-reden-custom" style="display:none; margin-top: 10px;">
                     <input type="text" id="stop-reden-tekst" placeholder="Typ je eigen reden..." style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #2D5016; background: #1a1a1a; color: #e0e0e0; font-size: 1em;">
                 </div>
@@ -126,28 +128,6 @@
             </div>
             <div class="popup-footer">
                 <button onclick="sluitResetPopup()" style="background: #8bc34a; color: #000;">Begrepen</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Definitief stop popup -->
-    <div id="definitief-overlay" class="popup-overlay hidden">
-        <div class="popup-box">
-            <div class="popup-header" style="background: #d32f2f; color: #fff;">
-                <span>🏁 Spel definitief beëindigen</span>
-            </div>
-            <div class="popup-body">
-                <p style="margin-bottom: 20px; font-size: 1.1em;">Weet je zeker dat je het spel wilt beëindigen?</p>
-                <p style="color: #ff9800; margin-bottom: 15px;">⚠️ Teams kunnen daarna NIET meer hervatten!</p>
-                <p style="color: #e0e0e0; line-height: 1.6;">
-                    Teams zien een eindscherm met de melding dat het spel is afgelopen.
-                    <br><br>
-                    Om opnieuw te beginnen moet je het spel volledig resetten.
-                </p>
-            </div>
-            <div class="popup-footer">
-                <button onclick="definitiefStopSpel()" style="background: #d32f2f; color: #fff;">🏁 Ja, beëindig definitief</button>
-                <button onclick="sluitDefinitiefPopup()" style="background: #666; color: #fff; margin-left: 10px;">Annuleer</button>
             </div>
         </div>
     </div>
@@ -214,11 +194,10 @@
         // Change listener eenmalig instellen (niet bij elke klik opnieuw)
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('stop-reden').addEventListener('change', function() {
-                if (this.value === 'Anders') {
-                    document.getElementById('stop-reden-custom').style.display = 'block';
-                } else {
-                    document.getElementById('stop-reden-custom').style.display = 'none';
-                }
+                const isWinnaar = this.value === 'Een team is klaar';
+                const isAnders  = this.value === 'Anders';
+                document.getElementById('stop-reden-winnaar').style.display = isWinnaar ? 'block' : 'none';
+                document.getElementById('stop-reden-custom').style.display  = isAnders  ? 'block' : 'none';
             });
         });
 
@@ -230,7 +209,10 @@
             const redenSelect = document.getElementById('stop-reden').value;
             let reden = redenSelect;
             
-            if (redenSelect === 'Anders') {
+            if (redenSelect === 'Een team is klaar') {
+                const winnaar = document.getElementById('stop-reden-winnaar-naam').value.trim();
+                reden = winnaar ? `Een team is klaar — Team ${winnaar.toUpperCase()} heeft gewonnen!` : 'Een team is klaar';
+            } else if (redenSelect === 'Anders') {
                 const customReden = document.getElementById('stop-reden-tekst').value.trim();
                 if (!customReden) {
                     alert('⚠️ Vul een reden in!');
@@ -284,37 +266,6 @@
             document.getElementById('reset-overlay').classList.add('hidden');
         }
 
-        function bevestigDefinitief() {
-            document.getElementById('definitief-overlay').classList.remove('hidden');
-        }
-
-        function sluitDefinitiefPopup() {
-            document.getElementById('definitief-overlay').classList.add('hidden');
-        }
-
-        async function definitiefStopSpel() {
-            document.getElementById('definitief-overlay').classList.add('hidden');
-            
-            const result = await apiCall('stopSpel', {
-                reden: '🏁 Spel is definitief beëindigd door spelleider'
-            }, 'POST');
-            
-            if (result && result.success) {
-                // Verberg hervat knop door gestopt sectie te updaten
-                const gestoptSectie = document.getElementById('spel-gestopt-sectie');
-                gestoptSectie.innerHTML = `
-                    <h3 style="color: #d32f2f; margin: 0 0 15px 0; text-align: center;">🏁 Spel is definitief beëindigd</h3>
-                    <p style="text-align: center; color: #e0e0e0; margin-bottom: 15px;">Teams kunnen niet meer hervatten.</p>
-                    <div style="display: flex; gap: 10px; justify-content: center;">
-                        <button onclick="bevestigReset()" style="padding: 15px 30px; background: #ff9800; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">🔄 Reset spel</button>
-                    </div>
-                `;
-                updateDashboard();
-            } else {
-                alert('❌ Fout bij definitief stoppen. Probeer opnieuw.');
-            }
-        }
-
         function startDashboardTimer(startDatum) {
             if (timerInterval) clearInterval(timerInterval);
             
@@ -366,54 +317,50 @@
                     startDashboardTimer(startDatum);
                 }
             } else if (data.startTijd) {
-                // Spel is gestopt (was gestart, maar nu niet meer)
+                // Spel is gestopt
                 document.getElementById('spel-gestart-badge').style.display = 'none';
                 const gestoptSectie = document.getElementById('spel-gestopt-sectie');
                 gestoptSectie.style.display = 'block';
                 document.getElementById('start-spel-btn').style.display = 'none';
                 document.getElementById('stop-spel-btn').style.display = 'none';
-                
-                // Check of het definitief gestopt is
-                const isDefinitief = data.stopReden && data.stopReden.includes('definitief');
-                
-                if (isDefinitief) {
-                    // DEFINITIEF - Alleen Reset knop
-                    gestoptSectie.innerHTML = `
-                        <h3 style="color: #d32f2f; margin: 0 0 15px 0; text-align: center;">🏁 Spel is definitief beëindigd</h3>
-                        <p class="stop-reden-tekst" style="color: #ff9800; margin: 15px 0; font-size: 1.1em; text-align: center;"><strong>Reden:</strong> ${data.stopReden}</p>
-                        <p style="text-align: center; color: #e0e0e0; margin-bottom: 15px;">Teams kunnen niet meer hervatten.</p>
-                        <div style="display: flex; gap: 10px; justify-content: center;">
-                            <button onclick="bevestigReset()" style="padding: 15px 30px; background: #ff9800; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">🔄 Reset spel</button>
-                        </div>
-                    `;
-                } else {
-                    // GEWONE STOP - Toon alle knoppen (Hervat, Definitief stop, Reset)
-                    // Check eerst of de originele knoppen er nog zijn
-                    if (!gestoptSectie.querySelector('button[onclick="hervatSpel()"]')) {
-                        // Knoppen zijn weg (misschien eerder vervangen), herstel ze
+
+                const isEindstand = data.stopReden && (
+                    data.stopReden.includes('Een team is klaar') ||
+                    data.stopReden.includes('Tijd is afgelopen')
+                );
+
+                if (!gestoptSectie.querySelector('.gestopt-knoppen-set')) {
+                    if (isEindstand) {
+                        // Eindstand — alleen Reset
+                        gestoptSectie.innerHTML = `
+                            <h3 style="color: #d32f2f; margin: 0 0 15px 0; text-align: center;">🏁 Spel beëindigd</h3>
+                            <div class="gestopt-knoppen-set" style="display: flex; gap: 10px; justify-content: center;">
+                                <button onclick="bevestigReset()" style="padding: 15px 30px; background: #ff9800; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">🔄 Reset spel</button>
+                            </div>
+                        `;
+                    } else {
+                        // Onderbreking — Hervat + Reset
                         gestoptSectie.innerHTML = `
                             <h3 style="color: #d32f2f; margin: 0 0 15px 0; text-align: center;">🛑 Spel is gestopt</h3>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div class="gestopt-knoppen-set" style="display: flex; gap: 10px; flex-wrap: wrap;">
                                 <button onclick="hervatSpel()" style="flex: 1; min-width: 180px; padding: 15px 20px; background: #8bc34a; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">▶️ Hervat</button>
-                                <button onclick="bevestigDefinitief()" style="flex: 1; min-width: 180px; padding: 15px 20px; background: #d32f2f; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;">🏁 Definitief stop</button>
                                 <button onclick="bevestigReset()" style="flex: 1; min-width: 180px; padding: 15px 20px; background: #ff9800; border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">🔄 Reset</button>
                             </div>
                         `;
                     }
-                    
-                    // Toon stop reden (verwijder oude eerst)
-                    const oudeReden = gestoptSectie.querySelector('.stop-reden-tekst');
-                    if (oudeReden) oudeReden.remove();
-                    
-                    if (data.stopReden) {
-                        const redenEl = document.createElement('p');
-                        redenEl.className = 'stop-reden-tekst';
-                        redenEl.style.cssText = 'color: #ff9800; margin: 15px 0; font-size: 1.1em;';
-                        redenEl.innerHTML = `<strong>Reden:</strong> ${data.stopReden}`;
-                        gestoptSectie.querySelector('h3').insertAdjacentElement('afterend', redenEl);
-                    }
                 }
-                
+
+                // Toon stop reden
+                const oudeReden = gestoptSectie.querySelector('.stop-reden-tekst');
+                if (oudeReden) oudeReden.remove();
+                if (data.stopReden) {
+                    const redenEl = document.createElement('p');
+                    redenEl.className = 'stop-reden-tekst';
+                    redenEl.style.cssText = 'color: #ff9800; margin: 15px 0; font-size: 1.1em;';
+                    redenEl.innerHTML = `<strong>Reden:</strong> ${data.stopReden}`;
+                    gestoptSectie.querySelector('h3').insertAdjacentElement('afterend', redenEl);
+                }
+
                 if (timerInterval) {
                     clearInterval(timerInterval);
                     timerInterval = null;
