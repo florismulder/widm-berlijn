@@ -451,7 +451,7 @@
                     statusTekst = '📍 Wacht op startlocatie goedkeuring';
                 } else if (team.status === 'Startlocatie_Goedgekeurd') {
                     statusClass = 'status-success';
-                    statusTekst = '✅ Startlocatie goedgekeurd';
+                    statusTekst = '🟢 Klaar — rollen worden verdeeld';
                 } else if (team.status === 'Op_weg') {
                     statusClass = 'status-info';
                     statusTekst = '🗺️ Onderweg naar locatie';
@@ -468,6 +468,12 @@
                     statusClass = 'status-success';
                     statusTekst = '✅ Goedgekeurd';
                 }
+
+                // Klaar voor start indicator (captain gekozen, wacht op spelleider)
+                const klaarVoorStart = !data.spelGestart && team.captainNaam && team.status === 'Wachten_op_Upload';
+                
+                // Locaties afgerond berekenen
+                const locatiesAfgerond = team.locatiesAfgerond !== undefined ? team.locatiesAfgerond : 0;
 
                 // Leden badges
                 const ledenHTML = team.leden.map(lid => {
@@ -517,6 +523,7 @@
                 }
 
                 teamCard.innerHTML = `
+                    ${klaarVoorStart ? '<div style="background:#1a4a0a;color:#8bc34a;padding:8px 14px;border-radius:6px;font-weight:bold;font-size:0.85em;margin-bottom:12px;text-align:center;">🚀 KLAAR VOOR START</div>' : ''}
                     <div class="team-header">
                         <h3>${team.teamnaam}</h3>
                         <span class="team-code">${team.teamcode}</span>
@@ -527,6 +534,8 @@
                         </div>
                         <div class="locatie-info">
                             <strong>📍 Locatie:</strong> ${team.huidigeLocatie || 'Nog niet gestart'}
+                            &nbsp;&nbsp;
+                            <strong>✅ Afgerond:</strong> ${locatiesAfgerond} / 6
                         </div>
                         ${team.huidigeOpdracht ? `<div class="locatie-info" style="color: #aaa; font-size: 0.9em;"><strong>📋 Opdracht:</strong> ${team.huidigeOpdracht}</div>` : ''}
                         <div class="status-sectie">

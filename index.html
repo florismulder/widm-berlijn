@@ -426,15 +426,14 @@
                     <h3>✅ Opdracht voltooid!</h3>
                     <p class="hint-label">Hint naar de volgende locatie:</p>
                     <p id="hint-tekst" class="hint-text"></p>
-                    <button onclick="naarVolgendeLocatie()" class="success-btn">🎯 Ga naar volgende locatie</button>
+                    <button onclick="bevestigNaarVolgende()" class="success-btn">🚶 Wij gaan onderweg</button>
                 </div>
             </div>
 
             <div id="onderweg-sectie" class="hidden">
                 <div class="onderweg-box" style="background: #1a3009; padding: 30px; border-radius: 16px; border-left: 5px solid #8bc34a;">
                     <h3 style="color: #8bc34a; margin-bottom: 20px;">🗺️ Onderweg naar volgende locatie</h3>
-                    <p style="color: #e0e0e0; margin-bottom: 20px;">Dit is nog een keer de hint:</p>
-                    <p id="onderweg-hint" class="hint-text" style="font-size: 1.1em; line-height: 1.7;"></p>
+                    <p style="color: #e0e0e0; margin-bottom: 20px;">Jullie zijn op weg! Klik hieronder als jullie er zijn.</p>
                     <p id="locatie-afkeur-opmerking" class="hidden" style="margin-top: 15px; padding: 12px 15px; background: #3a1a00; border-left: 4px solid #ff9800; border-radius: 6px; color: #ff9800; font-size: 0.95em;"></p>
                     <button onclick="deelLocatie()" class="success-btn" style="margin-top: 30px;">📍 Klik hier als jullie er zijn</button>
                 </div>
@@ -1235,9 +1234,8 @@
                 document.getElementById('hint-sectie').classList.remove('hidden');
                 document.getElementById('hint-tekst').textContent = data.hint;
             } else if (data.status === "Op_weg") {
-                // Toon onderweg sectie
+                // Toon onderweg sectie — geen hint zichtbaar
                 document.getElementById('onderweg-sectie').classList.remove('hidden');
-                document.getElementById('onderweg-hint').textContent = data.hint;
                 // Toon opmerking spelleider als die er is
                 const opmerkingEl = document.getElementById('locatie-afkeur-opmerking');
                 if (data.locatieAfkeurOpmerking) {
@@ -1306,8 +1304,8 @@
                     setTimeout(() => {
                         document.getElementById('voortgang-balk-container').classList.add('hidden');
                         document.getElementById('voortgang-balk').style.width = '0%';
-                        btn.disabled = false;
-                        btn.textContent = 'Verstuur opdracht';
+                        btn.disabled = true;
+                        btn.textContent = '✅ Opdracht verstuurd';
                         input.value = '';
                         document.getElementById('bestandsnaam').textContent = '';
                         updateSpelStatus();
@@ -1324,40 +1322,36 @@
             reader.readAsDataURL(file);
         }
 
+        function bevestigNaarVolgende() {
+            toonPopup('Hebben jullie de hint goed gelezen en onthouden?', true, (bevestigd) => {
+                if (bevestigd) {
+                    naarVolgendeLocatie();
+                }
+                // Bij Nee: popup sluit, hint blijft zichtbaar
+            });
+        }
+
         async function naarVolgendeLocatie() {
             const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
-            
-            // Disable knop om dubbele aanroepen te voorkomen
-            const btn = document.querySelector('#hint-sectie .success-btn');
-            if (btn) btn.disabled = true;
-            
-            // Haal de huidige hint op (die we net hebben gezien)
-            const huidigeHint = document.getElementById('hint-tekst').textContent;
-            
+
             const result = await apiCall('gaNaarVolgendeLocatie', { teamcode }, 'POST');
-            
+
             if (result && result.success) {
-                // Speel spanning sound
                 playSound('volgendeLocatie');
-                
-                // Direct UI updaten naar onderweg modus
+
+                // Direct UI updaten naar onderweg modus — geen hint meer tonen
                 document.getElementById('locatie-opdracht-sectie').classList.add('hidden');
                 document.getElementById('upload-sectie').classList.add('hidden');
                 document.getElementById('wacht-sectie').classList.add('hidden');
                 document.getElementById('hint-sectie').classList.add('hidden');
                 document.getElementById('onderweg-sectie').classList.remove('hidden');
                 document.getElementById('gps-wacht-sectie').classList.add('hidden');
-                
-                // Toon de hint DIRECT
-                document.getElementById('onderweg-hint').textContent = huidigeHint;
-                
-                // Wacht 2s voor backend verwerking, dan pas synchen
+
+                // Wacht 2s voor backend verwerking, dan synchen
                 setTimeout(updateSpelStatus, 2000);
             } else if (result && result.error) {
-                if (btn) btn.disabled = false;
                 toonPopup('Fout: ' + result.error);
             } else {
-                if (btn) btn.disabled = false;
                 toonPopup('Fout bij naar volgende locatie gaan. Probeer opnieuw.');
             }
         }
