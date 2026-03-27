@@ -314,6 +314,7 @@
                 <div class="wacht-box">
                     <p>⏳ De spelleider bekijkt jullie bewijs...</p>
                     <p style="color: #999; font-size: 0.9em; margin-top: 10px;">Zodra goedgekeurd, kunnen jullie de rollen verdelen.</p>
+                    <p style="color: #8bc34a; font-size: 0.85em; margin-top: 15px;">Even geduld, dit kan even duren.</p>
                 </div>
             </div>
         </div>
@@ -418,6 +419,7 @@
                 <div class="wacht-box">
                     <p>⏳ De spelleider bekijkt jullie bewijs...</p>
                     <p id="wacht-reden" style="color: #999; font-size: 0.9em; margin-top: 10px;"></p>
+                    <p style="color: #8bc34a; font-size: 0.85em; margin-top: 15px;">Even geduld, dit kan even duren.</p>
                 </div>
             </div>
 
@@ -443,6 +445,7 @@
                 <div class="wacht-box">
                     <p>⏳ De spelleider checkt jullie locatie...</p>
                     <p style="color: #999; font-size: 0.9em; margin-top: 10px;">Zodra goedgekeurd, krijgen jullie de opdracht te zien.</p>
+                    <p style="color: #8bc34a; font-size: 0.85em; margin-top: 15px;">Even geduld, dit kan even duren.</p>
                 </div>
             </div>
         </div>
@@ -460,14 +463,9 @@
         // Alle audio bestanden van GitHub
         const AUDIO = {
             wachtMuziek: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/WIDM_Berlijn_begin.mp3'),
-            wachtenOpSpelStart: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/wachten_op_spel_start.mp3'),
-            stopMuziek: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/WIDM_Berlijn_einde.mp3'),
-            goedgekeurd: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/goedgekeurd.mp3'),
-            afgekeurd: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/afgekeurd.mp3'),
-            volgendeLocatie: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/volgende_locatie.mp3'),
-            gpsGedeeld: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/gps_gedeeld.mp3'),
-            spelStart: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/spel_start.mp3'),
-            countdown: new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/countdown.mp3')
+            stopMuziek:  new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/WIDM_Berlijn_einde.mp3'),
+            countdown:   new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/countdown.mp3'),
+            afgekeurd:   new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/afgekeurd.mp3'),
         };
         
         function playMuziek(type) {
@@ -507,16 +505,9 @@
             if (!soundEnabled) return;
             const sound = AUDIO[soundName];
             if (sound) {
-                sound.loop = false; // Sound effects nooit loopen
+                sound.loop = false;
                 sound.currentTime = 0;
-                if (soundName === 'countdown') {
-                    sound.volume = 0.8;
-                } else if (soundName === 'spelStart') {
-                    sound.volume = 0.7;
-                } else {
-                    sound.volume = 0.5;
-                }
-                // Speel met retry bij autoplay-blokkering
+                sound.volume = (soundName === 'countdown') ? 0.8 : 0.5;
                 const playPromise = sound.play();
                 if (playPromise) {
                     playPromise.catch(() => {
@@ -686,36 +677,40 @@
                 return;
             }
 
+            const btn = document.querySelector('#login-scherm button');
+            btn.disabled = true;
+            btn.textContent = 'Even geduld...';
+
             const leden = await apiCall('getLeden', { teamcode });
             
             if (!leden || leden.error) {
+                btn.disabled = false;
+                btn.textContent = 'Inloggen';
                 toonPopup('Ongeldige teamcode! Probeer opnieuw.');
                 return;
             }
             
             huidigTeamcode = teamcode;
             alleLeden = leden.leden;
-            
-            // Sla teamcode op in localStorage
             localStorage.setItem('widm_teamcode', teamcode);
-            
-            // Start wachtmuziek
             playMuziek('wachtMuziek');
             
-            // Check of startlocatie al goedgekeurd is
             const startlocatieInfo = await apiCall('getStartlocatieInfo', { teamcode });
             
             if (!startlocatieInfo) {
+                btn.disabled = false;
+                btn.textContent = 'Inloggen';
                 toonPopup('Fout bij ophalen startlocatie info. Probeer opnieuw.');
                 return;
             }
             
+            btn.disabled = false;
+            btn.textContent = 'Inloggen';
+            
             if (startlocatieInfo.status === 'Startlocatie_Goedgekeurd') {
-                // Al goedgekeurd, ga direct naar rollen verdelen
                 overgeblevenLeden = [...alleLeden];
                 toonRollenScherm();
             } else {
-                // Nog niet goedgekeurd, toon startlocatie scherm
                 toonStartlocatieScherm(startlocatieInfo);
             }
         }
@@ -827,7 +822,7 @@
                 if (startlocatieInfo.status === 'Startlocatie_Goedgekeurd') {
                     // Goedgekeurd! Ga naar rollen verdelen
                     clearInterval(startlocatieCheckInterval);
-                    playSound('goedgekeurd');  // Speel goedgekeurd sound!
+                      // Speel goedgekeurd sound!
                     overgeblevenLeden = [...alleLeden];
                     toonRollenScherm();
                 } else if (startlocatieInfo.status === 'Wachten_op_Startlocatie_Upload') {
@@ -1070,7 +1065,7 @@
             spelWasGestopt = false;
             vorigeStatus = null;
             
-            playSound('spelStart');
+            
             toonScherm('spel-scherm');
             
             document.getElementById('locatie-naam').textContent = 'Laden...';
@@ -1222,7 +1217,7 @@
                 
                 // Speel goedgekeurd sound alleen bij STATUS CHANGE
                 if (vorigeStatus === "Wachten_op_Goedkeuring") {
-                    playSound('goedgekeurd');
+                    
                 }
                 
                 document.getElementById('locatie-opdracht-sectie').classList.remove('hidden');
@@ -1332,7 +1327,7 @@
             const result = await apiCall('gaNaarVolgendeLocatie', { teamcode }, 'POST');
 
             if (result && result.success) {
-                playSound('volgendeLocatie');
+                
 
                 // Direct UI updaten naar onderweg modus — geen hint meer tonen
                 document.getElementById('locatie-opdracht-sectie').classList.add('hidden');
@@ -1376,7 +1371,7 @@
                         sluitPopup();
                         
                         // Speel GPS ping sound
-                        playSound('gpsGedeeld');
+                        
                         
                         // Direct UI updaten naar GPS wacht scherm
                         document.getElementById('onderweg-sectie').classList.add('hidden');
@@ -1410,8 +1405,8 @@
 
         // ===== WACHTSCHERM =====
         function toonWachtscherm() {
-            stopMuziek();  // Stop intro muziek
-            playMuziek('wachtenOpSpelStart');  // Start wacht muziek
+            stopMuziek();
+            playMuziek('wachtMuziek');  // Zelfde intro muziek blijft doorspelen
             toonScherm('wacht-op-start-scherm');
             checkSpelGestart();
         }
@@ -1432,13 +1427,8 @@
                     stopMuziek();
                     
                     // Force stop alle muziek audio — maar NIET spelStart
-                    Object.entries(AUDIO).forEach(([key, a]) => {
-                        if (key !== 'spelStart') { a.pause(); a.currentTime = 0; }
-                    });
-                    
-                    // Maak een verse spelStart instantie zodat force-stop hem niet blokkeert
-                    AUDIO.spelStart = new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/spel_start.mp3');
-                    AUDIO.spelStart.volume = 0.7;
+                    // Force stop alle muziek audio
+                    Object.values(AUDIO).forEach(a => { a.pause(); a.currentTime = 0; });
                     
                     setTimeout(() => {
                         startSpel();
