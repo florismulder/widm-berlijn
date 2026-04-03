@@ -447,6 +447,9 @@
                     <p style="color: #999; font-size: 0.9em; margin-top: 10px;">Zodra goedgekeurd, krijgen jullie de opdracht te zien.</p>
                     <p style="color: #8bc34a; font-size: 0.85em; margin-top: 15px;">Even geduld, dit kan even duren.</p>
                 </div>
+                <button onclick="annuleerLocatieCheck()" style="background: transparent; color: #999; border: 1px solid #444; font-size: 0.85em; padding: 10px; margin-top: 10px; letter-spacing: 1px;">
+                    📍 Toch opnieuw locatie delen
+                </button>
             </div>
         </div>
     </div>
@@ -591,6 +594,7 @@
         let spelSchermsHTML = null;   // Originele spel-scherm HTML voor herstel bij hervat
         let popupCallback = null;
         let vorigeStatus = null; // Voor detectie status changes (goedkeuring sound)
+        let lokaalNaarVolgende = false; // Voorkomt dat hint opnieuw verschijnt na klik "onderweg"
         
         // ===== EIGEN POPUP =====
         function toonPopup(tekst, metAnnuleer = false, callback = null) {
@@ -877,9 +881,7 @@
                 
                 if (count === 0) {
                     clearInterval(timer);
-                    // Scherm rood — blijft precies 1 seconde (zelfde als andere cijfers), dan toonRol
-                    document.getElementById('privacy-scherm').style.background = '#8b0000';
-                    setTimeout(() => toonRol(), 1000);
+                    setTimeout(() => toonRol(), 600);
                 } else {
                     playSound('countdown');
                 }
@@ -1123,12 +1125,17 @@
                 const mapsUrl = 'https://maps.google.com/?q=Burgstraße+28,+10178+Berlin,+Duitsland';
 
                 if (isWinnaar) {
+                    // Extraheer teamnaam uit stopReden: "Een team is klaar — Team ALPHA heeft gewonnen!"
+                    let winnaarNaam = '';
+                    const match = data.stopReden.match(/Team\s+([A-Z]+)\s+heeft gewonnen/i);
+                    if (match) winnaarNaam = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+
                     // WINNAAR SCHERM
                     document.getElementById('spel-scherm').innerHTML = `
                         <div style="text-align: center; padding: 30px 20px;">
                             <h1 style="font-size: 3.5em; margin-bottom: 15px;">🏆</h1>
-                            <h2 style="color: #8bc34a; font-size: 1.8em; margin-bottom: 10px;">Een team heeft gewonnen!</h2>
-                            <p style="color: #e0e0e0; font-size: 1.1em; margin-bottom: 30px;">${data.stopReden}</p>
+                            <h2 style="color: #8bc34a; font-size: 1.8em; margin-bottom: 10px;">Het spel is voorbij</h2>
+                            <p style="color: #ffffff; font-size: 1.4em; font-weight: bold; margin-bottom: 30px;">${winnaarNaam ? 'Team ' + winnaarNaam + ' heeft gewonnen!' : 'Een team heeft gewonnen!'}</p>
                             <div style="background: #1a3009; padding: 25px; border-radius: 16px; margin: 20px 0; border-left: 5px solid #8bc34a;">
                                 <p style="color: #8bc34a; font-size: 1.1em; font-weight: bold; margin-bottom: 15px;">📍 Kom zo snel mogelijk naar:</p>
                                 <p style="color: #e0e0e0; font-size: 1.3em; font-weight: bold; margin-bottom: 5px;">James Simon Park</p>
@@ -1212,7 +1219,7 @@
                 } else {
                     wachtRedenEl.textContent = '';
                 }
-            } else if (data.status === "Goedgekeurd") {
+            } else if (data.status === "Goedgekeurd" && !lokaalNaarVolgende) {
                 // Toon hint sectie - opdracht voltooid, toon hint
                 
                 // Speel goedgekeurd sound alleen bij STATUS CHANGE
@@ -1224,6 +1231,7 @@
                 document.getElementById('hint-sectie').classList.remove('hidden');
                 document.getElementById('hint-tekst').textContent = data.hint;
             } else if (data.status === "Op_weg") {
+                lokaalNaarVolgende = false; // Reset vlag — backend bevestigt dat we op weg zijn
                 // Toon onderweg sectie — geen hint zichtbaar
                 document.getElementById('onderweg-sectie').classList.remove('hidden');
                 // Toon opmerking spelleider als die er is
@@ -1327,7 +1335,7 @@
             const result = await apiCall('gaNaarVolgendeLocatie', { teamcode }, 'POST');
 
             if (result && result.success) {
-                
+                lokaalNaarVolgende = true; // Hint niet opnieuw tonen bij race-condition in polling
 
                 // Direct UI updaten naar onderweg modus — geen hint meer tonen
                 document.getElementById('locatie-opdracht-sectie').classList.add('hidden');
@@ -1354,6 +1362,12 @@
 
             toonPopup('📍 GPS locatie ophalen...');
 
+            const gpsOpties = {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            };
+
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     const latitude = position.coords.latitude;
@@ -1367,17 +1381,9 @@
                     }, 'POST');
 
                     if (result && result.success) {
-                        // Sluit de "GPS ophalen..." popup
                         sluitPopup();
-                        
-                        // Speel GPS ping sound
-                        
-                        
-                        // Direct UI updaten naar GPS wacht scherm
                         document.getElementById('onderweg-sectie').classList.add('hidden');
                         document.getElementById('gps-wacht-sectie').classList.remove('hidden');
-                        
-                        // Dan data ophalen van backend
                         updateSpelStatus();
                     } else {
                         toonPopup('❌ Fout bij delen van locatie. Probeer opnieuw.');
@@ -1387,20 +1393,30 @@
                     let errorMsg = '';
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            errorMsg = '❌ GPS toegang geweigerd. Sta locatie toe in je browser instellingen.';
+                            errorMsg = '❌ Locatie geweigerd. Op iPhone: ga naar Instellingen → Privacy → Locatievoorzieningen → Safari → "Vragen of sta toe". Probeer daarna opnieuw.';
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            errorMsg = '❌ Locatie informatie niet beschikbaar.';
+                            errorMsg = '❌ Locatie niet beschikbaar. Zorg dat GPS aan staat en probeer opnieuw.';
                             break;
                         case error.TIMEOUT:
-                            errorMsg = '❌ GPS request timeout. Probeer opnieuw.';
+                            errorMsg = '❌ GPS timeout. Ga even naar buiten en probeer opnieuw.';
                             break;
                         default:
-                            errorMsg = '❌ Onbekende GPS fout.';
+                            errorMsg = '❌ GPS fout. Probeer opnieuw.';
                     }
                     toonPopup(errorMsg);
-                }
+                },
+                gpsOpties
             );
+        }
+
+        async function annuleerLocatieCheck() {
+            const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
+            await apiCall('annuleerLocatieCheck', { teamcode }, 'POST');
+            // Altijd UI resetten, ook bij backend fout
+            document.getElementById('gps-wacht-sectie').classList.add('hidden');
+            document.getElementById('onderweg-sectie').classList.remove('hidden');
+            updateSpelStatus();
         }
 
         // ===== WACHTSCHERM =====
@@ -1425,14 +1441,16 @@
                     clearInterval(spelCheckInterval);
                     spelCheckInterval = null;
                     stopMuziek();
-                    
-                    // Force stop alle muziek audio — maar NIET spelStart
-                    // Force stop alle muziek audio
                     Object.values(AUDIO).forEach(a => { a.pause(); a.currentTime = 0; });
-                    
                     setTimeout(() => {
                         startSpel();
                     }, 300);
+                } else if (data && data.stopReden) {
+                    // Spel is voorbij (eindstand) — toon eindscherm
+                    clearInterval(spelCheckInterval);
+                    spelCheckInterval = null;
+                    stopMuziek();
+                    startSpel();
                 }
             }, 5000); // Check elke 5 seconden
         }
@@ -1460,7 +1478,11 @@
                         // Check of spel al gestart is
                         const spelData = await apiCall('getSpelData', { teamcode: huidigTeamcode });
                         if (spelData && spelData.spelGestart) {
-                            stopMuziek();  // Stop muziek voor de zekerheid
+                            stopMuziek();
+                            startSpel();
+                        } else if (spelData && spelData.stopReden) {
+                            // Spel is gestopt (eindstand/winnaar) — toon eindscherm direct
+                            stopMuziek();
                             startSpel();
                         } else {
                             toonWachtscherm();
@@ -1473,10 +1495,14 @@
                             toonStartlocatieScherm(startlocatieInfo);
                         }
                     } else {
-                        // Andere status, check of spel al gestart is
+                        // Andere status (spel bezig of gestopt)
                         const spelData = await apiCall('getSpelData', { teamcode: huidigTeamcode });
                         if (spelData && spelData.spelGestart) {
-                            stopMuziek();  // Stop muziek voor de zekerheid
+                            stopMuziek();
+                            startSpel();
+                        } else if (spelData && spelData.stopReden) {
+                            // Spel is gestopt — toon eindscherm direct
+                            stopMuziek();
                             startSpel();
                         } else {
                             toonWachtscherm();
