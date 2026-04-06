@@ -473,7 +473,21 @@
                     ${klaarVoorStart ? '<div style="background:#1a4a0a;color:#8bc34a;padding:8px 14px;border-radius:6px;font-weight:bold;font-size:0.85em;margin-bottom:12px;text-align:center;">🚀 KLAAR VOOR START</div>' : ''}
                     <div class="team-header">
                         <h3>${team.teamnaam}</h3>
-                        <span class="team-code">${team.teamcode}</span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="team-code">${team.teamcode}</span>
+                            <button onclick="openAdminChat('${team.teamcode}','${team.teamnaam}')" style="
+                                position:relative;background:#1a1a1a;border:1px solid #444;border-radius:8px;
+                                color:#e0e0e0;font-size:1.1em;padding:6px 10px;cursor:pointer;
+                                width:auto;min-width:0;margin:0;letter-spacing:0;text-transform:none;">
+                                💬
+                                <span id="chat-badge-${team.teamcode}" class="hidden" style="
+                                    position:absolute;top:-6px;right:-6px;
+                                    background:#d32f2f;color:#fff;border-radius:50%;
+                                    width:18px;height:18px;font-size:0.65em;
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-weight:bold;">0</span>
+                            </button>
+                        </div>
                     </div>
                     <div class="team-info">
                         <div class="leden-sectie">
@@ -565,7 +579,8 @@
         // Start dashboard updates
         window.onload = function() {
             updateDashboard();
-            dashboardInterval = setInterval(updateDashboard, 10000); // Update elke 10 seconden
+            dashboardInterval = setInterval(updateDashboard, 10000);
+            setInterval(updateChatBadges, 6000); // Chat badges elke 6s bijwerken
         };
     </script>
 
@@ -896,6 +911,165 @@
             setTimeout(() => {
                 toast.remove();
             }, 3000);
+        }
+    </script>
+    <!-- Chat drawer (rechts) -->
+    <div id="admin-chat-panel" style="
+        position: fixed; top: 0; right: -420px; width: 400px; height: 100vh;
+        background: #111; border-left: 2px solid #2D5016;
+        display: flex; flex-direction: column; z-index: 9000;
+        transition: right 0.3s ease; box-shadow: -8px 0 30px rgba(0,0,0,0.6);">
+        <!-- Header -->
+        <div style="padding: 20px; border-bottom: 1px solid #2D5016; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: #1a1a1a;">
+            <div>
+                <div style="color: #8bc34a; font-weight: bold; font-size: 1.1em;">💬 Chat</div>
+                <div id="admin-chat-teamnaam" style="color: #999; font-size: 0.85em;"></div>
+            </div>
+            <button onclick="sluitAdminChat()" style="
+                background: transparent; border: 1px solid #444; color: #999;
+                font-size: 1.2em; cursor: pointer; border-radius: 8px;
+                padding: 6px 12px; width: auto; min-width: 0; margin: 0; letter-spacing: 0;">✕</button>
+        </div>
+        <!-- Berichten -->
+        <div id="admin-chat-berichten" style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+            <p style="color: #555; text-align: center; font-size: 0.9em; margin-top: 20px;">Geen berichten.</p>
+        </div>
+        <!-- Input -->
+        <div style="padding: 14px 16px; border-top: 1px solid #2D5016; background: #1a1a1a; flex-shrink: 0;">
+            <div style="display: flex; gap: 10px;">
+                <textarea id="admin-chat-invoer" rows="2" placeholder="Antwoord aan team..." maxlength="300"
+                    style="flex: 1; padding: 10px 14px; background: #111; border: 1px solid #2D5016;
+                    border-radius: 8px; color: #e0e0e0; font-size: 0.95em; resize: none;
+                    font-family: 'Share Tech Mono', monospace; width: auto; margin: 0;"></textarea>
+                <button onclick="verstuurAdminAntwoord()" style="
+                    width: 50px; min-width: 0; padding: 10px; margin: 0;
+                    background: #2D5016; border: 1px solid #8bc34a; border-radius: 8px;
+                    color: #8bc34a; font-size: 1.3em; cursor: pointer; letter-spacing: 0;
+                    align-self: stretch;">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay achter chat drawer -->
+    <div id="admin-chat-overlay" onclick="sluitAdminChat()" style="
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.4); z-index: 8999;"></div>
+
+    <script>
+        let adminChatHuidigTeam = null;
+        let adminChatHuidigNaam = null;
+        let adminChatInterval = null;
+
+        function openAdminChat(teamcode, teamnaam) {
+            adminChatHuidigTeam = teamcode;
+            adminChatHuidigNaam = teamnaam;
+
+            document.getElementById('admin-chat-teamnaam').textContent = teamnaam;
+            document.getElementById('admin-chat-panel').style.right = '0';
+            document.getElementById('admin-chat-overlay').style.display = 'block';
+
+            laadAdminChatBerichten();
+
+            if (adminChatInterval) clearInterval(adminChatInterval);
+            adminChatInterval = setInterval(laadAdminChatBerichten, 5000);
+
+            document.getElementById('admin-chat-invoer').focus();
+        }
+
+        function sluitAdminChat() {
+            document.getElementById('admin-chat-panel').style.right = '-420px';
+            document.getElementById('admin-chat-overlay').style.display = 'none';
+            if (adminChatInterval) clearInterval(adminChatInterval);
+            adminChatInterval = null;
+            adminChatHuidigTeam = null;
+        }
+
+        async function laadAdminChatBerichten() {
+            if (!adminChatHuidigTeam) return;
+            const data = await apiCall('getAdminChat');
+            if (!data || !data.chat) return;
+
+            const teamChat = data.chat[adminChatHuidigTeam];
+            const berichten = teamChat ? teamChat.berichten : [];
+
+            const container = document.getElementById('admin-chat-berichten');
+            if (berichten.length === 0) {
+                container.innerHTML = '<p style="color: #555; text-align: center; font-size: 0.9em; margin-top: 20px;">Geen berichten.</p>';
+                return;
+            }
+
+            // Bewaar scroll positie — scroll naar beneden alleen als al onderaan
+            const wasOnderaan = container.scrollTop + container.clientHeight >= container.scrollHeight - 20;
+
+            container.innerHTML = berichten.map(b => {
+                const isSpelleider = b.richting === 'SPELLEIDER';
+                const tijd = b.timestamp ? new Date(b.timestamp).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }) : '';
+                return `
+                    <div style="display: flex; flex-direction: column; align-items: ${isSpelleider ? 'flex-end' : 'flex-start'};">
+                        <div style="
+                            max-width: 82%; padding: 10px 14px;
+                            border-radius: ${isSpelleider ? '14px 14px 4px 14px' : '14px 14px 14px 4px'};
+                            background: ${isSpelleider ? '#2D5016' : '#2a2a2a'};
+                            color: ${isSpelleider ? '#c8e6a0' : '#e0e0e0'};
+                            border: 1px solid ${isSpelleider ? '#8bc34a' : '#444'};
+                            font-size: 0.9em; line-height: 1.4;">
+                            ${!isSpelleider ? '<span style="color:#8bc34a;font-size:0.8em;display:block;margin-bottom:3px;">👥 Team</span>' : ''}
+                            ${b.bericht}
+                        </div>
+                        <span style="color: #555; font-size: 0.75em; margin-top: 3px;">${tijd}</span>
+                    </div>`;
+            }).join('');
+
+            if (wasOnderaan) container.scrollTop = container.scrollHeight;
+
+            // Markeer berichten als gelezen
+            await apiCall('markAdminChatGelezen', { teamcode: adminChatHuidigTeam }, 'POST');
+            // Badge van dit team leegmaken
+            const badge = document.getElementById('chat-badge-' + adminChatHuidigTeam);
+            if (badge) badge.classList.add('hidden');
+        }
+
+        async function verstuurAdminAntwoord() {
+            const invoer = document.getElementById('admin-chat-invoer');
+            const bericht = invoer.value.trim();
+            if (!bericht || !adminChatHuidigTeam) return;
+
+            invoer.value = '';
+            invoer.disabled = true;
+
+            const result = await apiCall('beantwoordChat', {
+                teamcode: adminChatHuidigTeam,
+                bericht
+            }, 'POST');
+
+            invoer.disabled = false;
+            invoer.focus();
+
+            if (result && result.success) {
+                await laadAdminChatBerichten();
+            } else {
+                toonToast('Bericht kon niet worden verzonden.', 'error');
+            }
+        }
+
+        // Bijwerken van chat badges zonder de hele kaarten te herbouwen
+        async function updateChatBadges() {
+            const data = await apiCall('getAdminChat');
+            if (!data || !data.chat) return;
+
+            Object.entries(data.chat).forEach(([teamcode, chatData]) => {
+                const badge = document.getElementById('chat-badge-' + teamcode);
+                if (!badge) return;
+
+                const ongelezen = chatData.ongelezenVanTeam || 0;
+                if (ongelezen > 0 && adminChatHuidigTeam !== teamcode) {
+                    badge.textContent = ongelezen;
+                    badge.classList.remove('hidden');
+                    badge.style.display = 'flex';
+                } else {
+                    badge.classList.add('hidden');
+                }
+            });
         }
     </script>
 </body>
