@@ -391,7 +391,7 @@
         <div id="spel-scherm" class="scherm hidden">
             <!-- Timer bovenaan -->
             <div id="spel-timer" class="spel-timer hidden">⏱️ <span id="spel-timer-tekst">2:00:00</span></div>
-            
+
             <div id="locatie-opdracht-sectie">
                 <div class="status-badge" id="status-badge">Huidige locatie</div>
                 <h2 id="locatie-naam"></h2>
@@ -426,9 +426,15 @@
             <div id="hint-sectie" class="hidden">
                 <div class="success-box">
                     <h3>✅ Opdracht voltooid!</h3>
+                    <div style="background: #3a1a00; border-left: 4px solid #ff9800; padding: 12px 15px; border-radius: 8px; margin: 15px 0;">
+                        <p style="color: #ff9800; font-size: 0.95em; margin: 0; line-height: 1.5;">
+                            ⚠️ <strong>Je ziet deze hint maar één keer!</strong><br>
+                            Lees hem hardop voor aan je team zodat iedereen hem kent.
+                        </p>
+                    </div>
                     <p class="hint-label">Hint naar de volgende locatie:</p>
                     <p id="hint-tekst" class="hint-text"></p>
-                    <button onclick="bevestigNaarVolgende()" class="success-btn">🚶 Wij gaan onderweg</button>
+                    <button onclick="naarVolgendeLocatie()" class="success-btn">🚶 Hint gelezen — Wij gaan onderweg</button>
                 </div>
             </div>
 
@@ -452,24 +458,6 @@
                 </button>
             </div>
         </div>
-    </div>
-
-    <!-- ===== CHAT ===== -->
-    <!-- Floating chat knop (alleen zichtbaar tijdens spel) -->
-    <div id="chat-knop" class="hidden" onclick="openChat()" style="
-        position: fixed; bottom: 25px; right: 20px;
-        width: 58px; height: 58px; border-radius: 50%;
-        background: #2D5016; border: 2px solid #8bc34a;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer; z-index: 500; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        font-size: 1.5em; transition: transform 0.2s;">
-        💬
-        <span id="chat-badge" class="hidden" style="
-            position: absolute; top: -4px; right: -4px;
-            background: #d32f2f; color: #fff; border-radius: 50%;
-            width: 20px; height: 20px; font-size: 0.65em;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-family: monospace;">0</span>
     </div>
 
     <!-- Chat panel (slide-up overlay) -->
@@ -806,37 +794,38 @@
             
             const btn = document.getElementById('startlocatie-upload-btn');
             btn.disabled = true;
-            btn.textContent = 'Uploaden...';
+            btn.textContent = 'Verwerken...';
 
             document.getElementById('startlocatie-voortgang-container').classList.remove('hidden');
             let voortgang = 0;
             const voortgangInterval = setInterval(() => {
-                voortgang = Math.min(voortgang + Math.random() * 15, 90);
+                voortgang = Math.min(voortgang + Math.random() * 12, 85);
                 document.getElementById('startlocatie-voortgang-balk').style.width = voortgang + '%';
                 document.getElementById('startlocatie-voortgang-tekst').textContent = Math.round(voortgang) + '%';
             }, 300);
-            
-            const file = input.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = async function(e) {
-                const base64 = e.target.result;
-                
-                console.log('Uploading to API:', huidigTeamcode);
-                
+
+            try {
+                const base64 = await comprimeerAfbeelding(input.files[0]);
+
+                if (!base64) {
+                    clearInterval(voortgangInterval);
+                    document.getElementById('startlocatie-voortgang-container').classList.add('hidden');
+                    toonPopup('Foto laden mislukt. Probeer een andere foto.');
+                    btn.disabled = false;
+                    btn.textContent = 'Verstuur bewijs';
+                    return;
+                }
+
                 const uploadResult = await apiCall('uploadStartlocatieFoto', {
                     teamcode: huidigTeamcode,
                     fotoData: base64
                 }, 'POST');
-                
-                console.log('Upload result:', uploadResult);
-                
+
                 clearInterval(voortgangInterval);
 
                 if (uploadResult && uploadResult.success) {
                     document.getElementById('startlocatie-voortgang-balk').style.width = '100%';
                     document.getElementById('startlocatie-voortgang-tekst').textContent = '100% ✓';
-                    
                     setTimeout(() => {
                         document.getElementById('startlocatie-voortgang-container').classList.add('hidden');
                         document.getElementById('startlocatie-voortgang-balk').style.width = '0%';
@@ -846,22 +835,21 @@
                         btn.textContent = 'Verstuur bewijs';
                         input.value = '';
                         document.getElementById('startlocatie-bestandsnaam').textContent = '';
-                        
-                        // Start polling voor goedkeuring
                         startStartlocatieCheck();
                     }, 1000);
-
                 } else {
                     document.getElementById('startlocatie-voortgang-container').classList.add('hidden');
-                    const errorMsg = uploadResult?.error || 'Onbekende fout';
-                    console.error('Upload failed:', errorMsg, uploadResult);
-                    toonPopup('Uploaden mislukt: ' + errorMsg);
+                    toonPopup('Uploaden mislukt: ' + (uploadResult?.error || 'Onbekende fout'));
                     btn.disabled = false;
                     btn.textContent = 'Verstuur bewijs';
                 }
-            };
-            
-            reader.readAsDataURL(file);
+            } catch (err) {
+                clearInterval(voortgangInterval);
+                document.getElementById('startlocatie-voortgang-container').classList.add('hidden');
+                toonPopup('Fout bij uploaden. Probeer opnieuw.');
+                btn.disabled = false;
+                btn.textContent = 'Verstuur bewijs';
+            }
         }
 
         function startStartlocatieCheck() {
@@ -889,6 +877,7 @@
 
         // ===== ROLLEN VERDELEN =====
         function toonRollenScherm() {
+            stopMuziek();
             toonScherm('rollen-scherm');
             updateLedenLijst();
         }
@@ -1253,6 +1242,7 @@
             if (data.status === "Wachten_op_Upload") {
                 // Check of foto net is afgekeurd (status change)
                 if (vorigeStatus === "Wachten_op_Goedkeuring") {
+                    vorigeStatus = "Wachten_op_Upload"; // Voorkom dubbele popup
                     playSound('afgekeurd');
                     toonPopup('❌ Foto afgekeurd! Upload opnieuw een betere foto.');
                 }
@@ -1302,6 +1292,40 @@
             vorigeStatus = data.status;
         }
 
+        // ===== FOTO COMPRESSIE (iOS Safari fix) =====
+        // Comprimeert foto via canvas naar max 1200px, jpeg 0.75 kwaliteit
+        // Voorkomt crashes bij grote iOS-camerabestanden (4-12MB)
+        async function comprimeerAfbeelding(file, maxPx = 1200, kwaliteit = 0.75) {
+            return new Promise((resolve) => {
+                const objectUrl = URL.createObjectURL(file);
+                const img = new Image();
+
+                img.onload = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    let b = img.naturalWidth, h = img.naturalHeight;
+                    if (b > maxPx || h > maxPx) {
+                        if (b > h) { h = Math.round(h * maxPx / b); b = maxPx; }
+                        else       { b = Math.round(b * maxPx / h); h = maxPx; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = b; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, b, h);
+                    resolve(canvas.toDataURL('image/jpeg', kwaliteit));
+                };
+
+                img.onerror = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    // Fallback: stuur origineel via FileReader
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = () => resolve(null);
+                    reader.readAsDataURL(file);
+                };
+
+                img.src = objectUrl;
+            });
+        }
+
         function toonBestandsnaam() {
             const input = document.getElementById('foto-input');
             const naam = document.getElementById('bestandsnaam');
@@ -1314,42 +1338,44 @@
 
         async function verstuurBewijs() {
             const input = document.getElementById('foto-input');
-            
+
             if (!input.files || input.files.length === 0) {
-                toonPopup('Selecteer eerst een foto of video!');
+                toonPopup('Selecteer eerst een foto!');
                 return;
             }
-            
+
             const btn = document.getElementById('upload-btn');
             btn.disabled = true;
-            btn.textContent = 'Uploaden...';
+            btn.textContent = 'Verwerken...';
 
             document.getElementById('voortgang-balk-container').classList.remove('hidden');
             let voortgang = 0;
             const voortgangInterval = setInterval(() => {
-                voortgang = Math.min(voortgang + Math.random() * 15, 90);
+                voortgang = Math.min(voortgang + Math.random() * 12, 85);
                 document.getElementById('voortgang-balk').style.width = voortgang + '%';
                 document.getElementById('voortgang-tekst').textContent = Math.round(voortgang) + '%';
             }, 300);
-            
-            const file = input.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = async function(e) {
-                const base64 = e.target.result;
+
+            try {
+                const base64 = await comprimeerAfbeelding(input.files[0]);
+
+                if (!base64) {
+                    clearInterval(voortgangInterval);
+                    document.getElementById('voortgang-balk-container').classList.add('hidden');
+                    toonPopup('Foto laden mislukt. Probeer een andere foto.');
+                    btn.disabled = false;
+                    btn.textContent = 'Verstuur opdracht';
+                    return;
+                }
+
                 const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
-                
-                const uploadResult = await apiCall('uploadFoto', {
-                    teamcode: teamcode,
-                    fotoData: base64
-                }, 'POST');
-                
+                const uploadResult = await apiCall('uploadFoto', { teamcode, fotoData: base64 }, 'POST');
+
                 clearInterval(voortgangInterval);
 
                 if (uploadResult && uploadResult.success) {
                     document.getElementById('voortgang-balk').style.width = '100%';
                     document.getElementById('voortgang-tekst').textContent = '100% ✓';
-                    
                     setTimeout(() => {
                         document.getElementById('voortgang-balk-container').classList.add('hidden');
                         document.getElementById('voortgang-balk').style.width = '0%';
@@ -1359,25 +1385,19 @@
                         document.getElementById('bestandsnaam').textContent = '';
                         updateSpelStatus();
                     }, 1000);
-
                 } else {
                     document.getElementById('voortgang-balk-container').classList.add('hidden');
-                    toonPopup('Uploaden mislukt. Probeer opnieuw.');
+                    toonPopup('Uploaden mislukt: ' + (uploadResult?.error || 'Onbekende fout') + '. Probeer opnieuw.');
                     btn.disabled = false;
                     btn.textContent = 'Verstuur opdracht';
                 }
-            };
-            
-            reader.readAsDataURL(file);
-        }
-
-        function bevestigNaarVolgende() {
-            toonPopup('Hebben jullie de hint goed gelezen en onthouden?', true, (bevestigd) => {
-                if (bevestigd) {
-                    naarVolgendeLocatie();
-                }
-                // Bij Nee: popup sluit, hint blijft zichtbaar
-            });
+            } catch (err) {
+                clearInterval(voortgangInterval);
+                document.getElementById('voortgang-balk-container').classList.add('hidden');
+                toonPopup('Fout bij uploaden. Probeer opnieuw.');
+                btn.disabled = false;
+                btn.textContent = 'Verstuur opdracht';
+            }
         }
 
         async function naarVolgendeLocatie() {
@@ -1444,7 +1464,7 @@
                     let errorMsg = '';
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            errorMsg = '❌ Locatie geweigerd. Op iPhone: ga naar Instellingen → Privacy → Locatievoorzieningen → Safari → "Vragen of sta toe". Probeer daarna opnieuw.';
+                            errorMsg = '❌ Locatie geweigerd. Op iPhone: ga naar Instellingen → Privacy → Locatievoorzieningen → Safari → kies "Vragen of sta toe".\n\nVergeet niet daarna Safari te vernieuwen (pull-to-refresh) voordat je het opnieuw probeert.';
                             break;
                         case error.POSITION_UNAVAILABLE:
                             errorMsg = '❌ Locatie niet beschikbaar. Zorg dat GPS aan staat en probeer opnieuw.';
@@ -1511,13 +1531,14 @@
         let chatOpen = false;
 
         function toonChatKnop(zichtbaar) {
-            const knop = document.getElementById('chat-knop');
+            const balk = document.getElementById('chat-balk');
+            if (!balk) return;
             if (zichtbaar) {
-                knop.classList.remove('hidden');
-                knop.style.display = 'flex';
+                balk.classList.remove('hidden');
+                balk.style.display = 'flex';
             } else {
-                knop.classList.add('hidden');
-                knop.style.display = '';
+                balk.classList.add('hidden');
+                balk.style.display = '';
                 sluitChat();
             }
         }
@@ -1547,7 +1568,7 @@
             const ongelezen = data.ongelezenVanSpelleider || 0;
             const badge = document.getElementById('chat-badge');
             if (ongelezen > 0 && !chatOpen) {
-                badge.textContent = ongelezen;
+                badge.textContent = 'nieuw';
                 badge.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
@@ -1636,72 +1657,68 @@
             const opgeslagenCode = localStorage.getItem('widm_teamcode');
             if (opgeslagenCode) {
                 huidigTeamcode = opgeslagenCode;
-                
-                // Check eerst startlocatie status
-                const startlocatieInfo = await apiCall('getStartlocatieInfo', { teamcode: huidigTeamcode });
-                
-                if (startlocatieInfo && startlocatieInfo.status) {
-                    if (startlocatieInfo.status === 'Startlocatie_Goedgekeurd') {
-                        // Check of spel al gestart is
-                        const spelData = await apiCall('getSpelData', { teamcode: huidigTeamcode });
-                        if (spelData && spelData.spelGestart) {
-                            stopMuziek();
-                            startSpel();
-                        } else if (spelData && spelData.stopReden) {
-                            // Spel is gestopt (eindstand/winnaar) — toon eindscherm direct
-                            stopMuziek();
-                            startSpel();
-                        } else {
-                            toonWachtscherm();
-                        }
-                    } else if (startlocatieInfo.status === 'Wachten_op_Startlocatie_Upload' || startlocatieInfo.status === 'Wachten_op_Startlocatie_Goedkeuring') {
-                        // Nog bezig met startlocatie, toon startlocatie scherm
+
+                try {
+                    // Check spelData EERST — meest betrouwbare bron voor spelstatus
+                    const spelData = await apiCall('getSpelData', { teamcode: huidigTeamcode });
+
+                    if (!spelData || spelData.error) {
+                        // Team bestaat niet meer (bijv. na reset) — terug naar login
+                        localStorage.removeItem('widm_teamcode');
+                        toonScherm('login-scherm');
+                        return;
+                    }
+
+                    if (spelData.spelGestart || spelData.stopReden) {
+                        // Spel loopt of is gestopt → ga direct naar spelscherm
+                        stopMuziek();
+                        startSpel();
+                        return;
+                    }
+
+                    // Spel nog niet gestart — check startlocatie status
+                    const startlocatieInfo = await apiCall('getStartlocatieInfo', { teamcode: huidigTeamcode });
+
+                    if (!startlocatieInfo || !startlocatieInfo.status) {
+                        localStorage.removeItem('widm_teamcode');
+                        toonScherm('login-scherm');
+                        return;
+                    }
+
+                    const status = startlocatieInfo.status;
+
+                    if (status === 'Wachten_op_Startlocatie_Upload' || status === 'Wachten_op_Startlocatie_Goedkeuring') {
                         const ledenData = await apiCall('getLeden', { teamcode: huidigTeamcode });
                         if (ledenData && ledenData.leden) {
                             alleLeden = ledenData.leden;
+                            playMuziek('wachtMuziek');
                             toonStartlocatieScherm(startlocatieInfo);
+                        } else {
+                            toonScherm('login-scherm');
                         }
                     } else {
-                        // Andere status (spel bezig of gestopt)
-                        const spelData = await apiCall('getSpelData', { teamcode: huidigTeamcode });
-                        if (spelData && spelData.spelGestart) {
-                            stopMuziek();
-                            startSpel();
-                        } else if (spelData && spelData.stopReden) {
-                            // Spel is gestopt — toon eindscherm direct
-                            stopMuziek();
-                            startSpel();
-                        } else {
-                            toonWachtscherm();
-                        }
+                        // Startlocatie goedgekeurd maar spel nog niet gestart
+                        toonWachtscherm();
                     }
-                } else {
-                    // Fout, clear localStorage en toon login
+                } catch (e) {
                     localStorage.removeItem('widm_teamcode');
                     toonScherm('login-scherm');
                 }
             } else {
-                // Toon login scherm EERST
                 toonScherm('login-scherm');
             }
-            
-            // Check sound popup NA het tonen van schermen (met kleine delay)
+
+            // Sound popup
             setTimeout(() => {
                 const soundPref = localStorage.getItem('widm_sound');
                 if (soundPref === null) {
                     document.getElementById('sound-popup').classList.remove('hidden');
                 } else {
-                    // Update UI based on saved preference
                     soundEnabled = soundPref === 'true';
                     const icon = document.getElementById('sound-icon');
                     const toggle = document.getElementById('sound-toggle');
-                    if (soundEnabled) {
-                        icon.textContent = '🔊';
-                        toggle.style.background = '#2D5016';
-                    } else {
-                        icon.textContent = '🔇';
-                        toggle.style.background = '#666';
-                    }
+                    if (soundEnabled) { icon.textContent = '🔊'; toggle.style.background = '#2D5016'; }
+                    else              { icon.textContent = '🔇'; toggle.style.background = '#666'; }
                 }
             }, 100);
         };

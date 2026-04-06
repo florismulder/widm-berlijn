@@ -38,7 +38,10 @@
                     ⏱️ <span id="dashboard-timer-tekst">2:00:00</span>
                 </div>
                 <button id="start-spel-btn" onclick="bevestigStart()" class="start-btn">🚀 START HET SPEL</button>
-                <button id="stop-spel-btn" onclick="bevestigStop()" class="stop-btn" style="display:none;">🛑 STOP HET SPEL</button>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button id="stop-spel-btn" onclick="bevestigStop()" class="stop-btn" style="display:none; flex:2;">🛑 STOP HET SPEL</button>
+                    <button id="pauze-spel-btn" onclick="pauzeSpel()" class="stop-btn" style="display:none; flex:1; background:#ff9800; font-size:1em;">⏸️ PAUZE</button>
+                </div>
             </div>
 
             <!-- Teams overzicht -->
@@ -240,6 +243,15 @@
             }
         }
 
+        async function pauzeSpel() {
+            const result = await apiCall('stopSpel', { reden: '⏸️ Pauze — wacht op de spelleider.' }, 'POST');
+            if (result && result.success) {
+                updateDashboard();
+            } else {
+                alert('❌ Fout bij pauzeren. Probeer opnieuw.');
+            }
+        }
+
         async function hervatSpel() {
             document.getElementById('hervat-overlay').classList.remove('hidden');
         }
@@ -311,6 +323,7 @@
                 document.getElementById('spel-gestopt-sectie').style.display = 'none';
                 document.getElementById('start-spel-btn').style.display = 'none';
                 document.getElementById('stop-spel-btn').style.display = 'block';
+                document.getElementById('pauze-spel-btn').style.display = 'block';
                 
                 if (data.startTijd && !timerInterval) {
                     const startDatum = new Date(data.startTijd).getTime();
@@ -323,6 +336,7 @@
                 gestoptSectie.style.display = 'block';
                 document.getElementById('start-spel-btn').style.display = 'none';
                 document.getElementById('stop-spel-btn').style.display = 'none';
+                document.getElementById('pauze-spel-btn').style.display = 'none';
 
                 const isEindstand = data.stopReden && (
                     data.stopReden.includes('Een team is klaar') ||
@@ -371,6 +385,7 @@
                 document.getElementById('spel-gestopt-sectie').style.display = 'none';
                 document.getElementById('start-spel-btn').style.display = 'block';
                 document.getElementById('stop-spel-btn').style.display = 'none';
+                document.getElementById('pauze-spel-btn').style.display = 'none';
                 
                 if (timerInterval) {
                     clearInterval(timerInterval);
