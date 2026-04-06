@@ -436,7 +436,9 @@
                     </div>
                     <p class="hint-label">Hint naar de volgende locatie:</p>
                     <p id="hint-tekst" class="hint-text"></p>
-                    <button onclick="naarVolgendeLocatie()" class="success-btn">🚶 Hint gelezen — Wij gaan onderweg</button>
+                    <button onclick="naarVolgendeLocatie()" class="success-btn" style="margin-top: 25px; font-size: 1.15em; background: #8bc34a; color: #000; border: none; padding: 20px; border-radius: 12px;">
+                        ✅ Hint gelezen? Klik hier
+                    </button>
                 </div>
             </div>
 
@@ -1043,6 +1045,16 @@
 
         async function startCaptainOnthulling(naam) {
             huidigeCaptain = naam;
+
+            // Toon direct laadscherm zodat team niet denkt dat er niets gebeurt
+            document.getElementById('captain-naam-onthulling').innerHTML = `
+                <div style="text-align:center;padding:30px 0;">
+                    <div class="laad-spinner" style="margin:0 auto 15px;"></div>
+                    <p style="color:#8bc34a;">Even geduld...</p>
+                </div>`;
+            document.getElementById('qr-sectie').classList.add('hidden');
+            document.getElementById('captain-keuze-sectie').classList.add('hidden');
+            toonScherm('captain-onthulling-scherm');
             
             const result = await apiCall('setCaptainCode', {
                 teamcode: huidigTeamcode,
@@ -1051,6 +1063,7 @@
 
             if (!result || result.error) {
                 toonPopup('Fout bij captain selectie. Probeer opnieuw.');
+                toonScherm('captain-scherm');
                 return;
             }
 
@@ -1063,11 +1076,8 @@
                 <p style="color: #e0e0e0; text-align: center; margin-bottom: 20px;">is de captain!</p>
             `;
 
-            document.getElementById('qr-sectie').classList.add('hidden');
             document.getElementById('captain-keuze-sectie').classList.remove('hidden');
             document.getElementById('qr-code').innerHTML = '';
-
-            toonScherm('captain-onthulling-scherm');
         }
 
         function captainOpZelfdeTelefoon() {
@@ -1366,8 +1376,11 @@
                 const hintBtn = document.querySelector('#hint-sectie button');
                 if (hintBtn && hintBtn.disabled) {
                     hintBtn.disabled = false;
-                    hintBtn.textContent = '🚶 Hint gelezen — Wij gaan onderweg';
+                    hintBtn.textContent = '✅ Hint gelezen? Klik hier';
                 }
+
+                // Scroll naar boven zodat waarschuwing + hint altijd in beeld starten
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (data.status === "Op_weg") {
                 lokaalNaarVolgende = false; // Reset vlag — backend bevestigt dat we op weg zijn
                 // Toon onderweg sectie — geen hint zichtbaar
@@ -1607,8 +1620,12 @@
         // ===== WACHTSCHERM =====
         function toonWachtscherm() {
             stopMuziek();
-            playMuziek('wachtMuziek');  // Zelfde intro muziek blijft doorspelen
             toonScherm('wacht-op-start-scherm');
+            // Probeer muziek direct, en nogmaals na 1s voor iOS
+            playMuziek('wachtMuziek');
+            setTimeout(() => {
+                if (!huidigeMuziek || huidigeMuziek.paused) playMuziek('wachtMuziek');
+            }, 1000);
             checkSpelGestart();
         }
 

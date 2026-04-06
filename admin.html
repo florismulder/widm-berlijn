@@ -524,6 +524,9 @@
 
                 container.appendChild(teamCard);
             });
+
+            // Badges bijwerken na rebuild (rebuild vervangt badge-elementen)
+            updateChatBadges();
         }
 
         async function keurStartlocatieGoed(teamcode) {
@@ -608,7 +611,7 @@
         window.onload = function() {
             updateDashboard();
             dashboardInterval = setInterval(updateDashboard, 10000);
-            setInterval(updateChatBadges, 6000); // Chat badges elke 6s bijwerken
+            // Geen apart badge interval — updateChatBadges wordt aangeroepen na elke updateDashboard
         };
     </script>
 
