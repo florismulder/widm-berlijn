@@ -478,8 +478,9 @@
                             <a href="${team.fotoUrl}" target="_blank" class="foto-link">📸 Bekijk foto</a>
                             <div class="actie-knoppen">
                                 <button onclick="keurGoed('${team.teamcode}')" class="btn-goedkeuren">✅ Goedkeuren</button>
-                                <button onclick="keurAf('${team.teamcode}')" class="btn-afkeuren">❌ Afkeuren</button>
+                                <button onclick="keurAfMetFeedback('${team.teamcode}')" class="btn-afkeuren">❌ Afkeuren</button>
                             </div>
+                            <input type="text" id="foto-feedback-${team.teamcode}" placeholder="Optioneel: feedback voor team bij afkeuren..." style="width:100%; margin-top:10px; padding:10px; background:#1a1a1a; border:1px solid #555; border-radius:6px; color:#e0e0e0; font-size:0.9em;">
                         </div>
                     `;
                 }
@@ -556,9 +557,21 @@
         }
 
         async function keurAf(teamcode) {
-            const result = await apiCall('keurAf', { teamcode }, 'POST');
+            const result = await apiCall('keurAf', { teamcode, opmerking: '' }, 'POST');
             if (result && result.success) {
                 toonToast('Foto afgekeurd. Team moet opnieuw uploaden.', 'warning');
+                updateDashboard();
+            } else {
+                toonToast('Fout bij afkeuren. Probeer opnieuw.', 'error');
+            }
+        }
+
+        async function keurAfMetFeedback(teamcode) {
+            const invoer = document.getElementById('foto-feedback-' + teamcode);
+            const opmerking = invoer ? invoer.value.trim() : '';
+            const result = await apiCall('keurAf', { teamcode, opmerking }, 'POST');
+            if (result && result.success) {
+                toonToast('Foto afgekeurd.' + (opmerking ? ' Feedback verstuurd naar team.' : ''), 'warning');
                 updateDashboard();
             } else {
                 toonToast('Fout bij afkeuren. Probeer opnieuw.', 'error');

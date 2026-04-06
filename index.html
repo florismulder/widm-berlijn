@@ -362,6 +362,7 @@
                 <p class="instructie">Laat de captain deze QR-code scannen op zijn of haar telefoon:</p>
                 <div id="qr-code"></div>
                 <p id="captain-code-tekst" style="font-size: 0.85em; color: #aaa; margin-top: 10px; text-align: center;"></p>
+                <button onclick="toonKeuzeTerug()" style="background: transparent; color: #999; border: 1px solid #444; margin-top: 15px; font-size: 0.9em; letter-spacing: 1px;">← Terug</button>
             </div>
         </div>
 
@@ -408,6 +409,7 @@
                 </button>
                 <input type="file" id="foto-input" accept="image/*" onchange="toonBestandsnaam()" style="display: none;">
                 <p id="bestandsnaam" style="color: #8bc34a; margin: 10px 0;"></p>
+                <div id="foto-afkeur-feedback" class="hidden" style="margin: 10px 0; padding: 12px 15px; background: #3a1a00; border-left: 4px solid #ff9800; border-radius: 6px; color: #ff9800; font-size: 0.95em; line-height: 1.5;"></div>
                 <div id="voortgang-balk-container" class="hidden">
                     <div id="voortgang-balk"></div>
                     <p id="voortgang-tekst">Uploaden...</p>
@@ -443,7 +445,9 @@
                     <h3 style="color: #8bc34a; margin-bottom: 20px;">🗺️ Onderweg naar volgende locatie</h3>
                     <p style="color: #e0e0e0; margin-bottom: 20px;">Jullie zijn op weg! Klik hieronder als jullie er zijn.</p>
                     <p id="locatie-afkeur-opmerking" class="hidden" style="margin-top: 15px; padding: 12px 15px; background: #3a1a00; border-left: 4px solid #ff9800; border-radius: 6px; color: #ff9800; font-size: 0.95em;"></p>
-                    <button onclick="deelLocatie()" class="success-btn" style="margin-top: 30px;">📍 Klik hier als jullie er zijn</button>
+                    <button id="gps-deel-btn" onclick="deelLocatie()" class="success-btn" style="margin-top: 30px; font-size: 1.2em; padding: 20px; background: #8bc34a; color: #000; border: none; border-radius: 12px; letter-spacing: 1px;">
+                        📍 Wij zijn er — klik hier!
+                    </button>
                 </div>
             </div>
 
@@ -458,6 +462,17 @@
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Chat balk (buiten spel-scherm zodat innerHTML-vervanging hem niet raakt) -->
+    <div id="chat-balk" class="hidden" onclick="openChat()" style="
+        display: flex; align-items: center; justify-content: space-between;
+        background: #1a1a1a; border: 1px solid #2D5016; border-radius: 10px;
+        padding: 12px 18px; margin: 0 20px 12px; cursor: pointer;">
+        <span style="color: #8bc34a; font-size: 0.95em;">💬 Bericht sturen naar spelleider</span>
+        <span id="chat-badge" class="hidden" style="
+            background: #d32f2f; color: #fff; border-radius: 12px;
+            padding: 2px 8px; font-size: 0.8em; font-weight: bold;">nieuw</span>
     </div>
 
     <!-- Chat panel (slide-up overlay) -->
@@ -630,6 +645,7 @@
         let popupCallback = null;
         let vorigeStatus = null; // Voor detectie status changes (goedkeuring sound)
         let lokaalNaarVolgende = false; // Voorkomt dat hint opnieuw verschijnt na klik "onderweg"
+        let huidigPrivacyTimer = null;  // Globale ref zodat we dubbele countdowns kunnen cancellen
         
         // ===== EIGEN POPUP =====
         function toonPopup(tekst, metAnnuleer = false, callback = null) {
@@ -901,9 +917,14 @@
         }
 
         function startPrivacyCheck(naam) {
+            // Annuleer eventuele lopende countdown (dubbele tap fix)
+            if (huidigPrivacyTimer) {
+                clearInterval(huidigPrivacyTimer);
+                huidigPrivacyTimer = null;
+            }
+
             huidigeLid = naam;
             document.getElementById('privacy-naam').textContent = naam;
-            // Reset rode achtergrond van vorige ronde
             document.getElementById('privacy-scherm').style.background = '';
             toonScherm('privacy-scherm');
             
@@ -911,13 +932,14 @@
             document.getElementById('countdown').textContent = count;
             playSound('countdown');
             
-            const timer = setInterval(() => {
+            huidigPrivacyTimer = setInterval(() => {
                 count--;
                 document.getElementById('countdown').textContent = count;
                 
                 if (count === 0) {
-                    clearInterval(timer);
-                    setTimeout(() => toonRol(), 600);
+                    clearInterval(huidigPrivacyTimer);
+                    huidigPrivacyTimer = null;
+                    setTimeout(() => toonRol(), 200);
                 } else {
                     playSound('countdown');
                 }
@@ -1002,6 +1024,11 @@
         function captainOpZelfdeTelefoon() {
             localStorage.setItem('widm_teamcode', huidigTeamcode);
             toonWachtscherm();
+        }
+
+        function toonKeuzeTerug() {
+            document.getElementById('qr-sectie').classList.add('hidden');
+            document.getElementById('captain-keuze-sectie').classList.remove('hidden');
         }
 
         function toonQRCode() {
@@ -1200,18 +1227,16 @@
                         </div>
                     `;
                 } else {
-                    // ONDERBREKING — wacht op spelleider
-                    const redenTekst = data.stopReden ? `<p style="color: #ff9800; font-weight: bold; margin: 20px 0; font-size: 1.2em;">${data.stopReden}</p>` : '';
+                    // ONDERBREKING of PAUZE — wacht op spelleider
+                    const isPauze = data.stopReden && (data.stopReden.includes('Pauze') || data.stopReden.includes('⏸️'));
+                    const redenTekst = (!isPauze && data.stopReden) ? `<p style="color: #ff9800; font-weight: bold; margin: 15px 0; font-size: 1.1em;">${data.stopReden}</p>` : '';
                     document.getElementById('spel-scherm').innerHTML = `
                         <div style="text-align: center; padding: 60px 20px;">
-                            <h1 style="font-size: 3em; color: #d32f2f; margin-bottom: 20px;">🛑</h1>
-                            <h2 style="color: #8bc34a; margin-bottom: 20px;">Spel is gestopt</h2>
+                            <h1 style="font-size: 3em; color: ${isPauze ? '#ff9800' : '#d32f2f'}; margin-bottom: 20px;">${isPauze ? '⏸️' : '🛑'}</h1>
+                            <h2 style="color: #8bc34a; margin-bottom: 20px;">${isPauze ? 'Spel is gepauzeerd' : 'Spel is gestopt'}</h2>
                             ${redenTekst}
                             <p style="color: #e0e0e0; font-size: 1.1em; line-height: 1.8;">
-                                Het spel is tijdelijk onderbroken door de spelleider.
-                            </p>
-                            <p style="color: #666; font-size: 0.9em; margin-top: 30px;">
-                                ⏳ Wacht op de spelleider...
+                                Wacht op de spelleider.
                             </p>
                         </div>
                     `;
@@ -1244,12 +1269,23 @@
                 if (vorigeStatus === "Wachten_op_Goedkeuring") {
                     vorigeStatus = "Wachten_op_Upload"; // Voorkom dubbele popup
                     playSound('afgekeurd');
-                    toonPopup('❌ Foto afgekeurd! Upload opnieuw een betere foto.');
+                    toonPopup('❌ Foto afgekeurd! Maak de foto opnieuw.');
                 }
                 
                 // Toon upload sectie - opdracht zichtbaar
                 document.getElementById('locatie-opdracht-sectie').classList.remove('hidden');
                 document.getElementById('upload-sectie').classList.remove('hidden');
+
+                // Toon foto-feedback van spelleider indien aanwezig
+                const feedbackEl = document.getElementById('foto-afkeur-feedback');
+                if (feedbackEl) {
+                    if (data.locatieAfkeurOpmerking) {
+                        feedbackEl.innerHTML = '💬 Feedback spelleider: <strong>' + data.locatieAfkeurOpmerking + '</strong>';
+                        feedbackEl.classList.remove('hidden');
+                    } else {
+                        feedbackEl.classList.add('hidden');
+                    }
+                }
             } else if (data.status === "Wachten_op_Goedkeuring") {
                 // Toon wacht sectie - foto geupload, wacht op spelleider
                 document.getElementById('locatie-opdracht-sectie').classList.remove('hidden');
@@ -1403,6 +1439,10 @@
         async function naarVolgendeLocatie() {
             const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
 
+            // Direct feedback op de knop
+            const hintBtn = document.querySelector('#hint-sectie button');
+            if (hintBtn) { hintBtn.disabled = true; hintBtn.textContent = '⏳ Even geduld...'; }
+
             const result = await apiCall('gaNaarVolgendeLocatie', { teamcode }, 'POST');
 
             if (result && result.success) {
@@ -1430,6 +1470,10 @@
                 toonPopup('❌ GPS is niet beschikbaar op dit apparaat.');
                 return;
             }
+
+            // Direct feedback op de knop
+            const gpsBtn = document.getElementById('gps-deel-btn');
+            if (gpsBtn) { gpsBtn.disabled = true; gpsBtn.textContent = '⏳ Even geduld...'; }
 
             toonPopup('📍 GPS locatie ophalen...');
 
@@ -1475,6 +1519,9 @@
                         default:
                             errorMsg = '❌ GPS fout. Probeer opnieuw.';
                     }
+                    // Knop resetten
+                    const gpsBtn = document.getElementById('gps-deel-btn');
+                    if (gpsBtn) { gpsBtn.disabled = false; gpsBtn.textContent = '📍 Wij zijn er — klik hier!'; }
                     toonPopup(errorMsg);
                 },
                 gpsOpties
@@ -1535,10 +1582,8 @@
             if (!balk) return;
             if (zichtbaar) {
                 balk.classList.remove('hidden');
-                balk.style.display = 'flex';
             } else {
                 balk.classList.add('hidden');
-                balk.style.display = '';
                 sluitChat();
             }
         }
