@@ -458,21 +458,21 @@
                     <p style="color: #8bc34a; font-size: 0.85em; margin-top: 15px;">Even geduld, dit kan even duren.</p>
                 </div>
                 <button onclick="annuleerLocatieCheck()" style="background: transparent; color: #999; border: 1px solid #444; font-size: 0.85em; padding: 10px; margin-top: 10px; letter-spacing: 1px;">
-                    📍 Toch opnieuw locatie delen
+                    📍 Opnieuw locatie delen
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- Chat balk (buiten spel-scherm zodat innerHTML-vervanging hem niet raakt) -->
-    <div id="chat-balk" class="hidden" onclick="openChat()" style="
-        display: flex; align-items: center; justify-content: space-between;
-        background: #1a1a1a; border: 1px solid #2D5016; border-radius: 10px;
-        padding: 12px 18px; margin: 0 20px 12px; cursor: pointer;">
-        <span style="color: #8bc34a; font-size: 0.95em;">💬 Bericht sturen naar spelleider</span>
-        <span id="chat-badge" class="hidden" style="
-            background: #d32f2f; color: #fff; border-radius: 12px;
-            padding: 2px 8px; font-size: 0.8em; font-weight: bold;">nieuw</span>
+        <!-- Chat balk binnen container, onder spel-scherm zodat breedte klopt -->
+        <div id="chat-balk" class="hidden" onclick="openChat()" style="
+            display: flex; align-items: center; justify-content: space-between;
+            background: #1a1a1a; border: 1px solid #2D5016; border-radius: 10px;
+            padding: 12px 18px; margin: 0 0 12px; cursor: pointer;">
+            <span style="color: #8bc34a; font-size: 0.95em;">💬 Bericht sturen naar spelleider</span>
+            <span id="chat-badge" class="hidden" style="
+                background: #d32f2f; color: #fff; border-radius: 12px;
+                padding: 2px 8px; font-size: 0.8em; font-weight: bold;">nieuw</span>
+        </div>
     </div>
 
     <!-- Chat panel (slide-up overlay) -->
@@ -521,6 +521,21 @@
             afgekeurd:   new Audio('https://raw.githubusercontent.com/florismulder/widm-berlijn/main/afgekeurd.mp3'),
         };
         
+        // iOS Safari blokkeert audio tenzij eerder ontgrendeld via gebruikershandeling.
+        // Elke touch/click ontgrendelt audio zodat polling-triggered muziek wel werkt.
+        let audioUnlocked = false;
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            audioUnlocked = true;
+            Object.values(AUDIO).forEach(a => {
+                const vol = a.volume;
+                a.volume = 0;
+                a.play().then(() => { a.pause(); a.currentTime = 0; a.volume = vol; }).catch(() => {});
+            });
+        }
+        document.addEventListener('touchend', unlockAudio, { passive: true });
+        document.addEventListener('click', unlockAudio, { passive: true });
+
         function playMuziek(type) {
             if (!soundEnabled) return;
             // Al bezig met dit type? Niet opnieuw starten (voorkomt reset van eindmuziek elke 10s)
@@ -531,10 +546,13 @@
             
             const muziek = AUDIO[type];
             if (muziek) {
-                // Intro muziek speelt één keer; wacht- en eindmuziek loopen
                 muziek.loop = (type !== 'wachtMuziek');
                 muziek.volume = (type === 'stopMuziek') ? 0.6 : 0.3;
-                muziek.play().catch(e => console.log('Muziek play failed:', e));
+                muziek.currentTime = 0;
+                muziek.play().catch(() => {
+                    // Retry na 800ms (iOS kan geblokkeerd hebben)
+                    setTimeout(() => muziek.play().catch(() => {}), 800);
+                });
                 huidigeMuziek = muziek;
             }
         }
@@ -1276,6 +1294,15 @@
                 document.getElementById('locatie-opdracht-sectie').classList.remove('hidden');
                 document.getElementById('upload-sectie').classList.remove('hidden');
 
+                // Upload-knop altijd resetten (knop blijft anders in "verstuurd"-staat tussen locaties)
+                const uploadBtn = document.getElementById('upload-btn');
+                if (uploadBtn && uploadBtn.textContent.includes('verstuurd')) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.textContent = 'Verstuur opdracht';
+                    document.getElementById('bestandsnaam').textContent = '';
+                    document.getElementById('voortgang-balk-container').classList.add('hidden');
+                }
+
                 // Toon foto-feedback van spelleider indien aanwezig
                 const feedbackEl = document.getElementById('foto-afkeur-feedback');
                 if (feedbackEl) {
@@ -1311,6 +1338,10 @@
                 lokaalNaarVolgende = false; // Reset vlag — backend bevestigt dat we op weg zijn
                 // Toon onderweg sectie — geen hint zichtbaar
                 document.getElementById('onderweg-sectie').classList.remove('hidden');
+
+                // Reset GPS knop (kan disabled zijn als locatie net werd afgekeurd)
+                const gpsBtn = document.getElementById('gps-deel-btn');
+                if (gpsBtn) { gpsBtn.disabled = false; gpsBtn.textContent = '📍 Wij zijn er — klik hier!'; }
                 // Toon opmerking spelleider als die er is
                 const opmerkingEl = document.getElementById('locatie-afkeur-opmerking');
                 if (data.locatieAfkeurOpmerking) {
@@ -1531,7 +1562,9 @@
         async function annuleerLocatieCheck() {
             const teamcode = huidigTeamcode || localStorage.getItem('widm_teamcode');
             await apiCall('annuleerLocatieCheck', { teamcode }, 'POST');
-            // Altijd UI resetten, ook bij backend fout
+            // Reset GPS knop altijd, ook bij backend fout
+            const gpsBtn = document.getElementById('gps-deel-btn');
+            if (gpsBtn) { gpsBtn.disabled = false; gpsBtn.textContent = '📍 Wij zijn er — klik hier!'; }
             document.getElementById('gps-wacht-sectie').classList.add('hidden');
             document.getElementById('onderweg-sectie').classList.remove('hidden');
             updateSpelStatus();
