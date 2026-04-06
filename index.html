@@ -1188,14 +1188,13 @@
             
             spelWasGestopt = false;
             vorigeStatus = null;
+            lokaalNaarVolgende = false;
             
             toonScherm('spel-scherm');
             toonChatKnop(true);
             startChatPolling();
             
-            document.getElementById('locatie-naam').textContent = 'Laden...';
-            document.getElementById('opdracht-tekst').textContent = 'Opdracht wordt geladen...';
-            
+            // Geen "Laden..." tekst — updateSpelStatus toont direct de juiste status
             updateSpelStatus();
             if (spelInterval) clearInterval(spelInterval);
             spelInterval = setInterval(updateSpelStatus, 10000);
@@ -1376,11 +1375,14 @@
                 const hintBtn = document.querySelector('#hint-sectie button');
                 if (hintBtn && hintBtn.disabled) {
                     hintBtn.disabled = false;
-                    hintBtn.textContent = '✅ Hint gelezen? Klik hier';
+                    hintBtn.textContent = '🚶 Hint gelezen — Wij gaan onderweg';
                 }
-
-                // Scroll naar boven zodat waarschuwing + hint altijd in beeld starten
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (data.status === "Goedgekeurd" && lokaalNaarVolgende) {
+                // Team heeft al op "Wij gaan onderweg" geklikt maar backend is nog Goedgekeurd
+                // Toon onderweg-sectie alvast zodat er geen leeg scherm is
+                document.getElementById('onderweg-sectie').classList.remove('hidden');
+                const gpsBtn = document.getElementById('gps-deel-btn');
+                if (gpsBtn) { gpsBtn.disabled = false; gpsBtn.textContent = '📍 Wij zijn er — klik hier!'; }
             } else if (data.status === "Op_weg") {
                 lokaalNaarVolgende = false; // Reset vlag — backend bevestigt dat we op weg zijn
                 // Toon onderweg sectie — geen hint zichtbaar

@@ -969,14 +969,17 @@
         <div style="padding: 14px 16px; border-top: 1px solid #2D5016; background: #1a1a1a; flex-shrink: 0;">
             <div style="display: flex; gap: 10px;">
                 <textarea id="admin-chat-invoer" rows="2" placeholder="Antwoord aan team..." maxlength="300"
-                    style="flex: 1; padding: 10px 14px; background: #111; border: 1px solid #2D5016;
+                    inputmode="text" autocorrect="off" autocapitalize="sentences"
+                    style="flex: 1; min-width: 0; padding: 10px 14px; background: #111; border: 1px solid #2D5016;
                     border-radius: 8px; color: #e0e0e0; font-size: 0.95em; resize: none;
-                    font-family: 'Share Tech Mono', monospace; width: auto; margin: 0;"></textarea>
-                <button onclick="verstuurAdminAntwoord()" style="
-                    width: 50px; min-width: 0; padding: 10px; margin: 0;
+                    font-family: 'Share Tech Mono', monospace; width: auto; margin: 0; box-sizing: border-box;"></textarea>
+                <button
+                    ontouchend="event.preventDefault(); verstuurAdminAntwoord();"
+                    onclick="verstuurAdminAntwoord()" style="
+                    flex-shrink: 0; width: 50px; min-width: 0; padding: 10px; margin: 0;
                     background: #2D5016; border: 1px solid #8bc34a; border-radius: 8px;
                     color: #8bc34a; font-size: 1.3em; cursor: pointer; letter-spacing: 0;
-                    align-self: stretch;">➤</button>
+                    align-self: stretch; -webkit-tap-highlight-color: transparent;">➤</button>
             </div>
         </div>
     </div>
