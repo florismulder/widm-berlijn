@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Wie is de Mol? - Berlijn</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -13,6 +13,12 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100%;
         }
 
         body {
@@ -1331,6 +1337,25 @@
                     playSound('afgekeurd');
                     toonPopup('❌ Foto afgekeurd! Maak de foto opnieuw.');
                 }
+
+                // Locatie 6: opdracht al goedgekeurd — toon eindscherm
+                if (data.locatie === 'James Simon Park') {
+                    document.getElementById('spel-scherm').innerHTML = `
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <h1 style="font-size: 3em; margin-bottom: 20px;">🕵️</h1>
+                            <h2 style="color: #8bc34a; font-size: 1.8em; margin-bottom: 15px;">Jullie zijn er!</h2>
+                            <p style="color: #e0e0e0; font-size: 1.1em; line-height: 1.7; margin-bottom: 30px;">
+                                Het spel is voorbij. Goed gespeeld!<br>
+                                De Mol zal zo worden onthuld.
+                            </p>
+                            <div style="background: #1a3009; padding: 20px; border-radius: 16px; border-left: 5px solid #8bc34a;">
+                                <p style="color: #8bc34a; font-weight: bold; margin-bottom: 8px;">🤫 Maar eerst...</p>
+                                <p style="color: #e0e0e0; font-size: 1em; line-height: 1.6;">Wie denk jij dat de Mol is? Bespreek het alvast met je team!</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
                 
                 // Toon upload sectie - opdracht zichtbaar
                 document.getElementById('locatie-opdracht-sectie').classList.remove('hidden');
@@ -1377,6 +1402,9 @@
                     hintBtn.disabled = false;
                     hintBtn.textContent = '🚶 Hint gelezen — Wij gaan onderweg';
                 }
+
+                // Altijd naar top scrollen zodat waarschuwing + hint direct zichtbaar zijn
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (data.status === "Goedgekeurd" && lokaalNaarVolgende) {
                 // Team heeft al op "Wij gaan onderweg" geklikt maar backend is nog Goedgekeurd
                 // Toon onderweg-sectie alvast zodat er geen leeg scherm is
@@ -1676,7 +1704,6 @@
 
         function openChat() {
             chatOpen = true;
-            document.body.style.overflowX = 'hidden';
             document.getElementById('chat-panel').classList.remove('hidden');
             document.getElementById('chat-badge').classList.add('hidden');
             document.getElementById('chat-badge').textContent = 'nieuw';
@@ -1686,7 +1713,6 @@
 
         function sluitChat() {
             chatOpen = false;
-            document.body.style.overflowX = '';
             document.getElementById('chat-panel').classList.add('hidden');
         }
 
@@ -1768,6 +1794,8 @@
 
         function startChatPolling() {
             if (chatInterval) clearInterval(chatInterval);
+            // Direct laden zodat badge meteen klopt
+            laadChatBerichten(false);
             chatInterval = setInterval(() => laadChatBerichten(false), 8000);
         }
 

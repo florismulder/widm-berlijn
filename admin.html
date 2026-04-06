@@ -611,7 +611,8 @@
         window.onload = function() {
             updateDashboard();
             dashboardInterval = setInterval(updateDashboard, 10000);
-            // Geen apart badge interval — updateChatBadges wordt aangeroepen na elke updateDashboard
+            updateChatBadges();
+            setInterval(updateChatBadges, 6000);
         };
     </script>
 
